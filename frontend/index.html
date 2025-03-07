@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kombi Transport</title>
+  <link rel="stylesheet" href="/src/styles/styles.css">
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Izbornik</h2>
+  <ul>
+    <li><a href="#">Postavke</a></li>
+    <li><a href="#">Pregled računa</a></li>
+    <li><a href="#">Povijest narudžbi</a></li>
+    <li><a href="#">Zatraži novu narudžbu</a></li>
+  </ul>
+</div>
+
+<div class="content">
+  <h1>Dobrodošli u Kombi Transport</h1>
+  <div id="calendar"></div>
+
+  <h3>Unesite adrese za dostavu</h3>
+  <div id="addresses">
+    <input type="text" placeholder="Skladište (polazna točka)" class="address-input">
+  </div>
+  <button type="button" id="add-address">Dodaj adresu</button>
+  <button type="button" id="calculate-route">Izračunaj rutu</button>
+
+  <div id="route-result"></div>
+</div>
+
+</body>
+</html>

@@ -1,13 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kalendar i Kalkulator Ruta</title>
-  <link rel="stylesheet" href="/styles/styles.css">
+  <title>Kombi Transport</title>
+  <link rel="stylesheet" href="style.css"> <!-- Ispravljena putanja -->
+  <!-- Uvoz stilova za FullCalendar preko CDN-a -->
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/dist/core.global.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/dist/daygrid.global.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/dist/interaction.global.min.js" defer></script>
 </head>
 <body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.js"></script>
+  <h1>Dobrodošli u Kombi Transport</h1>
+  <p>Odaberite datum za narudžbu kombija:</p>
+  <div id="calendar"></div>
+
+  <form id="deliveryForm">
+    <h3>Unesite adrese za dostavu</h3>
+    <div class="address-field">
+      <label>Skladište (polazna točka):</label><br>
+      <input type="text" id="warehouse" placeholder="npr. Ulica 1, Zagreb" required>
+    </div>
+    <div class="address-field">
+      <label>Odredišna adresa 1:</label><br>
+      <input type="text" id="address1" placeholder="npr. Trg 5, Split" required>
+    </div>
+    <div class="address-field">
+      <label>Odredišna adresa 2 (opcionalno):</label><br>
+      <input type="text" id="address2" placeholder="npr. Ulica 10, Rijeka">
+    </div>
+    <button type="submit">Potvrdi narudžbu</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script src="script.js"></script>
 </body>
 </html>

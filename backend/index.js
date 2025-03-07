@@ -1,10 +1,14 @@
 const express = require('express');
 const app = express();
 const port = 5001;
-const path = require('path');
 const ordersRouter = require('./routes/orders');
+const path = require('path');
 
-// Middleware za parsiranje JSON-a
 app.use(express.json());
+// Apsolutna putanja do public foldera
+app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use('/api/orders', ordersRouter);
 
-// Postavi put
+app.listen(port, () => {
+  console.log(`Server radi na http://localhost:${port}`);
+});

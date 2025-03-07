@@ -5,34 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kombi Transport</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Uvoz stilova za FullCalendar preko CDN-a -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/dist/core.global.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/dist/daygrid.global.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/dist/interaction.global.min.js" defer></script>
+  <!-- Uvoz skripti za FullCalendar lokalno -->
+  <script src="lib/fullcalendar-core.min.js"></script>
+  <script src="lib/fullcalendar-daygrid.min.js"></script>
+  <script src="lib/fullcalendar-interaction.min.js"></script>
 </head>
 <body>
-  <h1>Dobrodošli u Kombi Transport</h1>
-  <p>Odaberite datum za narudžbu kombija:</p>
-  <div id="calendar"></div>
+  <div class="container">
+    <!-- Navigacijski meni sa strane -->
+    <div class="sidebar">
+      <h2>Kombi Transport</h2>
+      <ul>
+        <li><a href="#">Početna</a></li>
+        <li><a href="#">Narudžbe</a></li>
+        <li><a href="#">Povijest</a></li>
+        <li><a href="#">Postavke</a></li>
+      </ul>
+    </div>
 
-  <form id="deliveryForm">
-    <h3>Unesite adrese za dostavu</h3>
-    <div class="address-field">
-      <label>Skladište (polazna točka):</label><br>
-      <input type="text" id="warehouse" placeholder="npr. Ulica 1, Zagreb" required>
-    </div>
-    <div class="address-field">
-      <label>Odredišna adresa 1:</label><br>
-      <input type="text" id="address1" placeholder="npr. Trg 5, Split" required>
-    </div>
-    <div class="address-field">
-      <label>Odredišna adresa 2 (opcionalno):</label><br>
-      <input type="text" id="address2" placeholder="npr. Ulica 10, Rijeka">
-    </div>
-    <button type="submit">Potvrdi narudžbu</button>
-  </form>
+    <!-- Glavni sadržaj -->
+    <main>
+      <h1>Dobrodošli u Kombi Transport</h1>
+      <p>Odaberite datum za narudžbu kombija:</p>
+      <div id="calendar"></div>
 
-  <div id="result"></div>
+      <form id="deliveryForm">
+        <h3>Unesite adrese za dostavu</h3>
+        <div class="address-field">
+          <label>Skladište (polazna točka):</label><br>
+          <input type="text" id="warehouse" placeholder="npr. Ulica 1, Zagreb" required>
+        </div>
+        <div class="address-field">
+          <label>Odredišna adresa 1:</label><br>
+          <input type="text" id="address1" placeholder="npr. Trg 5, Split" required>
+        </div>
+        <div class="address-field">
+          <label>Odredišna adresa 2 (opcionalno):</label><br>
+          <input type="text" id="address2" placeholder="npr. Ulica 10, Rijeka">
+        </div>
+        <button type="submit">Potvrdi narudžbu</button>
+      </form>
+
+      <div id="result"></div>
+    </main>
+  </div>
 
   <script src="script.js"></script>
 </body>

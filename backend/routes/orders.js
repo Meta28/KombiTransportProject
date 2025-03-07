@@ -6,21 +6,25 @@ const axios = require('axios');
 const orders = [];
 
 // API ključ za Google Maps
-const apiKey = 'AIzaSyB1mNQAD7JEoVAib3xjNlP_1DNIrlEHeiU';
+const apiKey = 'AIzaSyCS8w-5RCU31pqF5wBosKcPgvgWJUfeboM';
 
-// Funkcija za pretvaranje adresa u latitude i longitude
+// Funkcija za pretvaranje adresa u latitude i longitude s validacijom
 async function getLatLng(address) {
+  if (!address || typeof address !== 'string' || address.trim().length < 3) {
+    throw new Error('Adresa nije valjana ili je prekratka: ' + address);
+  }
   const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
     params: {
-      address,
+      address: address.trim(),
       key: apiKey
     }
   });
 
   const data = response.data;
+  console.log('Geocoding API response za adresu', address, ':', data);
 
-  if (data.status !== "OK" || !data.results || data.results.length === 0) {
-    throw new Error('Nije moguće dobiti koordinata za adresu: ' + address);
+  if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+    throw new Error('Nije moguće dobiti koordinata za adresu: ' + address + ' (Status: ' + data.status + ')');
   }
 
   const { lat, lng } = data.results[0].geometry.location;
@@ -31,14 +35,14 @@ async function getLatLng(address) {
 router.post('/create', async (req, res) => {
   const { userId, date, addresses } = req.body;
 
-  if (!userId || !date || !addresses || addresses.length < 2) {
-    console.log("❌ Nedostaju potrebne informacije za narudžbu.");
-    return res.status(400).json({ error: 'Nedostaju potrebne informacije za narudžbu.' });
+  if (!userId || !date || !addresses || !Array.isArray(addresses) || addresses.length < 2) {
+    console.log("❌ Nedostaju ili nevaljane informacije za narudžbu.", { userId, date, addresses });
+    return res.status(400).json({ error: 'Nedostaju ili nevaljane informacije za narudžbu.' });
   }
 
   try {
-    // Pretvaranje adresa u latLng formu
-    const latLngAddresses = await Promise.all(addresses.map(getLatLng));
+    // Pretvaranje adresa u latLng formu s validacijom
+    const latLngAddresses = await Promise.all(addresses.map(addr => getLatLng(addr)));
 
     // Postavi origin na prvu adresu, destination na posljednju, a intermediates na srednje adrese
     const intermediates = latLngAddresses.slice(1, -1).map(latLng => ({
@@ -46,17 +50,15 @@ router.post('/create', async (req, res) => {
     }));
     const requestBody = {
       origin: { location: { latLng: latLngAddresses[0] } },
-      destination: { location: { latLng: latLngAddresses[latLngAddresses.length - 1] } }, // Posljednja adresa
+      destination: { location: { latLng: latLngAddresses[latLngAddresses.length - 1] } },
       travelMode: 'DRIVE',
       routingPreference: 'TRAFFIC_AWARE',
-      intermediates: intermediates,
-      optimizeWaypointOrder: true,
+      intermediates: intermediates.length > 0 ? intermediates : undefined, // Ukloni intermediates ako je prazan
       languageCode: 'hr',
       units: 'METRIC'
     };
 
-    // Ispisujemo JSON zahtjev u točnom formatu za provjeru
-    console.log("📤 Šaljem zahtjev Google Routes API-ju s ovim podacima:", JSON.stringify(requestBody, null, 2));
+    console.log('Šaljem zahtjev s requestBody:', JSON.stringify(requestBody, null, 2));
 
     const response = await axios.post(
       `https://routes.googleapis.com/directions/v2:computeRoutes`,
@@ -65,7 +67,7 @@ router.post('/create', async (req, res) => {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'routes.distanceMeters,routes.duration,routes.optimizedWaypointOrder'
+          'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters'
         }
       }
     );
@@ -73,7 +75,7 @@ router.post('/create', async (req, res) => {
     const routeData = response.data;
 
     if (!routeData.routes || routeData.routes.length === 0) {
-      console.log("❌ Nema dostupnih ruta od Google API-ja.");
+      console.log("❌ Nema dostupnih ruta od Google API-ja. Response:", JSON.stringify(routeData));
       return res.status(500).json({ error: 'Nema dostupnih ruta.' });
     }
 
@@ -83,12 +85,14 @@ router.post('/create', async (req, res) => {
     // Povratak u Zagreb (prva adresa) s povlaštenom tarifom
     const returnRequestBody = {
       origin: { location: { latLng: latLngAddresses[latLngAddresses.length - 1] } },
-      destination: { location: { latLng: latLngAddresses[0] } }, // Povratak u Zagreb
+      destination: { location: { latLng: latLngAddresses[0] } },
       travelMode: 'DRIVE',
       routingPreference: 'TRAFFIC_AWARE',
       languageCode: 'hr',
       units: 'METRIC'
     };
+
+    console.log('Šaljem zahtjev za povratak s requestBody:', JSON.stringify(returnRequestBody, null, 2));
 
     const returnResponse = await axios.post(
       `https://routes.googleapis.com/directions/v2:computeRoutes`,
@@ -97,14 +101,14 @@ router.post('/create', async (req, res) => {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'routes.distanceMeters,routes.duration'
+          'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters'
         }
       }
     );
 
     const returnRouteData = returnResponse.data;
     if (!returnRouteData.routes || returnRouteData.routes.length === 0) {
-      console.log("❌ Nema dostupnih ruta za povratak.");
+      console.log("❌ Nema dostupnih ruta za povratak. Response:", JSON.stringify(returnRouteData));
       return res.status(500).json({ error: 'Nema dostupnih ruta za povratak.' });
     }
 
@@ -121,9 +125,7 @@ router.post('/create', async (req, res) => {
       id: orders.length + 1,
       userId,
       date,
-      addresses: routeData.routes[0].optimizedWaypointOrder
-        ? routeData.routes[0].optimizedWaypointOrder.map(index => addresses[index + 1]) // Preskoči prvu adresu
-        : addresses.slice(1), // Ako nema optimizacije, uzmi adrese kakve jesu
+      addresses: addresses.slice(1),
       totalDistance: totalDistanceWithReturn,
       totalPrice
     };
@@ -132,8 +134,11 @@ router.post('/create', async (req, res) => {
     console.log("✅ Narudžba uspješno spremljena:", newOrder);
     res.json({ message: 'Narudžba uspješno kreirana!', totalDistance: totalDistanceWithReturn, totalPrice });
   } catch (err) {
-    console.error('❌ Greška prilikom slanja zahtjeva:', err.response ? err.response.data : err.message);
-    res.status(500).json({ error: 'Greška prilikom kreiranja narudžbe.' });
+    console.error('❌ Greška prilikom slanja zahtjeva:', err.message);
+    if (err.response) {
+      console.error('Detalji greške:', err.response.data);
+    }
+    res.status(500).json({ error: 'Greška prilikom kreiranja narudžbe: ' + (err.response ? JSON.stringify(err.response.data) : err.message) });
   }
 });
 

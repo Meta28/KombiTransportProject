@@ -1,14 +1,18 @@
 const express = require('express');
 const app = express();
 const port = 5001;
-const ordersRouter = require('./routes/orders');
-const path = require('path');
+
+let orderRoutes;
+try {
+    orderRoutes = require('./routes/orders');
+} catch (error) {
+    console.error('Greška pri učitavanju routes/orders:', error.message);
+    process.exit(1); // Prekini rad servera ako ruta ne uspije učitati
+}
 
 app.use(express.json());
-// Apsolutna putanja do public foldera
-app.use(express.static(path.join(__dirname, '..', 'public')));
-app.use('/api/orders', ordersRouter);
+app.use('/api', orderRoutes);
 
 app.listen(port, () => {
-  console.log(`Server radi na http://localhost:${port}`);
+    console.log(`Server radi na http://localhost:${port}`);
 });

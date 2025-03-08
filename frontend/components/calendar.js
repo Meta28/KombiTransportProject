@@ -1,4 +1,3 @@
-
 export function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     let selectedDate = null;

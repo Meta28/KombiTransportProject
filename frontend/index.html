@@ -7,51 +7,167 @@
     <title>Kombi Transport</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="/public/lib/fullcalendar.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.5/main.min.css" rel="stylesheet" />
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCz-7YPbN6P0DnEsCQvG_7e6bK6UEgWtUA&libraries=places&loading=async" async defer></script>
     <link rel="stylesheet" href="/frontend/styles/main.css">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            width: 70%;
+            max-width: 500px;
+            z-index: 1001;
+        }
+        .close {
+            float: right;
+            cursor: pointer;
+        }
+        .sidebar ul .dropdown {
+            display: none;
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        .sidebar ul li:hover .dropdown {
+            display: block;
+        }
+        .dropdown-toggle {
+            cursor: pointer;
+        }
+        .address-field label {
+            margin-bottom: 5px;
+            display: block;
+        }
+        .address-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1002;
+        }
+        #suggestions div {
+            padding: 5px;
+            cursor: pointer;
+        }
+        #suggestions div:hover {
+            background: #f0f0f0;
+        }
+        #invoiceDetails {
+            display: none;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="sidebar">
             <h2>Kombi Transport</h2>
             <ul>
-                <li><a href="#">Početna</a></li>
-                <li><a href="#" id="showOrders">Narudžbe</a></li>
-                <li><a href="#" id="showHistory">Povijest</a></li>
+                <li><a href="/">Početna</a></li>
+                <li>
+                    <a href="/naruci-transport" class="dropdown-toggle">Naruči transport</a>
+                    <ul class="dropdown">
+                        <li><a href="#" id="showOrders" onclick="showOrderForm()">Novi transport</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-toggle">Prijašnji transporti</a>
+                    <ul class="dropdown">
+                        <li><a href="#" id="showHistory">Popis transporta</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-toggle">Fakture</a>
+                    <ul class="dropdown">
+                        <li><a href="#" id="showInvoices">Popis faktura</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-toggle">Klijenti</a>
+                    <ul class="dropdown">
+                        <li><a href="#" id="showClients">Popis klijenata</a></li>
+                        <li><a href="#" id="addClient">Novi klijent</a></li>
+                    </ul>
+                </li>
                 <li><a href="#">Postavke</a></li>
             </ul>
         </div>
         <main>
-            <h1>Dobrodošli u Kombi Transport</h1>
-            <p>Odaberite datum za narudžbu kombija:</p>
-            <div id="calendar"></div>
-            <form id="deliveryForm">
-                <h3>Unesite adrese za dostavu</h3>
+            <h1 id="pageTitle">Dobrodošli u Kombi Transport</h1>
+            <p id="welcomeMessage">Za naručivanje transporta kliknite na <a href="/naruci-transport">Naruči transport</a>.</p>
+            <div id="calendar" style="display: none;"></div>
+            <form id="deliveryForm" style="display: none;">
+                <h3>Unesite podatke za transport</h3>
                 <p class="info-message">Napomena: Autocompletiranje adresa trenutno nije dostupno dok čekamo aktivaciju API-ja. Unesite adrese ručno.</p>
                 <div id="addressFields">
                     <div class="address-field">
-                        <label>Ime kupca:</label><br>
-                        <input type="text" id="customerName" class="address-input" placeholder="npr. Ivan Horvat" required>
+                        <label>Datum dostave:</label><br>
+                        <input type="text" id="deliveryDate" class="address-input" readonly required>
+                    </div>
+                    <div class="address-field">
+                        <label>Ime kupca (naručitelj):</label><br>
+                        <input type="text" id="customerName" class="address-input" placeholder="Unesite ime kupca" required>
+                        <div id="suggestions"></div>
+                    </div>
+                    <div class="address-field">
+                        <label>OIB kupca:</label><br>
+                        <input type="text" id="customerOIB" class="address-input" placeholder="Unesite OIB kupca">
+                    </div>
+                    <div class="address-field">
+                        <label>Adresa kupca:</label><br>
+                        <input type="text" id="customerAddress" class="address-input" placeholder="Unesite adresu kupca" required>
                     </div>
                     <div class="address-field">
                         <label>Skladište (polazna točka):</label><br>
-                        <input type="text" id="warehouse" class="address-input" placeholder="npr. Ulica 1, Zagreb" required>
-                    </div>
-                    <div class="address-field">
-                        <label>Odredišna adresa 1:</label><br>
-                        <input type="text" id="address1" class="address-input" placeholder="npr. Trg 5, Split" required>
+                        <input type="text" id="warehouse" class="address-input" placeholder="Unesite adresu skladišta" required>
                     </div>
                 </div>
+                <div id="deliveryDetails"></div>
                 <div class="address-field">
                     <label>Hitna dostava:</label><br>
                     <input type="checkbox" id="urgentDelivery">
                 </div>
-                <button type="button" id="addAddress">Dodaj još jednu adresu</button>
-                <button type="submit">Potvrdi narudžbu</button>
+                <button type="button" id="addAddress">Dodaj adresu dostave</button>
+                <button type="submit">Transport</button>
                 <button type="button" id="viewCosts">Pregled troškova</button>
             </form>
             <div id="result"></div>
             <div id="history" style="display: none;"></div>
+            <div id="clients" style="display: none;"></div>
+            <div id="invoices" style="display: none;"></div>
+            <div id="modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">×</span>
+                    <h3>Detalji transporta</h3>
+                    <div id="modalDetails"></div>
+                </div>
+            </div>
+            <div id="invoiceDetails">
+                <h3>Detalji fakture</h3>
+                <p id="invoiceInfo"></p>
+            </div>
         </main>
     </div>
     <script type="module" src="/frontend/scripts/main.js"></script>

@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
-    var selectedDate = null; // Varijabla za spremanje odabranog datuma
+    var selectedDate = null;
   
-    // Inicijalizacija FullCalendara
     if (typeof FullCalendar === 'undefined') {
       console.error('FullCalendar nije učitan. Provjerite datoteke u public/lib folderu.');
       return;
@@ -12,13 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
       initialView: 'dayGridMonth',
       selectable: true,
       select: function(info) {
-        selectedDate = info.startStr; // Spremi odabrani datum
+        selectedDate = info.startStr;
         alert('Odabrali ste datum: ' + selectedDate);
       }
     });
     calendar.render();
   
-    // Inicijalizacija Google Places Autocomplete
     function initAutocomplete() {
       if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
         console.error('Google Maps API nije učitan ili Places API nije dostupan.');
@@ -28,10 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
       var inputs = document.getElementsByClassName('address-input');
       for (var i = 0; i < inputs.length; i++) {
         var autocomplete = new google.maps.places.Autocomplete(inputs[i], {
-          types: ['address'], // Ograniči na adrese
-          componentRestrictions: { country: 'hr' } // Ograniči na Hrvatsku (opcionalno)
+          types: ['address'],
+          componentRestrictions: { country: 'hr' }
         });
-        // Spremi referencu na input za kasniju upotrebu
         autocomplete.input = inputs[i];
         autocomplete.addListener('place_changed', function() {
           var place = this.getPlace();
@@ -39,13 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Nema detalja o lokaciji za:', place.name);
             return;
           }
-          // Ažuriraj input s formatiranom adresom
           this.input.value = place.formatted_address;
         });
       }
     }
   
-    // Provjeri je li Google Maps API učitan prije pokretanja autocomplete-a
     if (typeof google !== 'undefined' && google.maps && google.maps.places) {
       initAutocomplete();
     } else {
@@ -58,19 +53,36 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   
+    // Dinamičko dodavanje adresa
+    document.getElementById('addAddress').addEventListener('click', function() {
+      var addressFields = document.getElementById('addressFields');
+      var addressCount = addressFields.getElementsByClassName('address-field').length;
+      var newAddressField = document.createElement('div');
+      newAddressField.className = 'address-field';
+      newAddressField.innerHTML = `
+        <label>Odredišna adresa ${addressCount}:</label><br>
+        <input type="text" class="address-input" placeholder="npr. Ulica ${addressCount + 1}, Rijeka" required>
+      `;
+      addressFields.appendChild(newAddressField);
+      initAutocomplete();
+    });
+  
     // Obrada forme
     var form = document.getElementById('deliveryForm');
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
   
       var warehouse = document.getElementById('warehouse').value;
-      var address1 = document.getElementById('address1').value;
-      var address2 = document.getElementById('address2').value;
-      var addresses = [warehouse, address1, address2].filter(Boolean);
+      var addressInputs = document.getElementsByClassName('address-input');
+      var addresses = [warehouse];
+      for (var i = 1; i < addressInputs.length; i++) {
+        if (addressInputs[i].value.trim()) {
+          addresses.push(addressInputs[i].value);
+        }
+      }
   
-      // Validacija adresa
-      if (addresses.some(addr => addr.trim().length < 5 || !addr.includes(','))) {
-        document.getElementById('result').innerHTML = 'Unesite valjane adrese (minimum 5 znakova i mora sadržavati grad, npr. Ulica 1, Zagreb, Hrvatska).';
+      if (addresses.length < 2) {
+        document.getElementById('result').innerHTML = 'Unesite minimalno 2 adrese.';
         return;
       }
   
@@ -93,7 +105,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
   
         const data = await response.json();
-        document.getElementById('result').innerHTML = `Narudžba:<br>Datum: ${selectedDate}<br>Ukupna udaljenost: ${data.totalDistance.toFixed(2)} km<br>Cijena dostave: ${data.totalPrice.toFixed(2)} EUR`;
+        const optimizedRoute = data.optimizedAddresses ? data.optimizedAddresses.join(' -> ') : 'Nije dostupna optimizirana ruta';
+        document.getElementById('result').innerHTML = `Narudžba:<br>Datum: ${selectedDate}<br>Optimizirana ruta: ${optimizedRoute}<br>Ukupna udaljenost: ${data.totalDistance.toFixed(2)} km<br>Cijena dostave: ${data.totalPrice.toFixed(2)} EUR`;
       } catch (error) {
         document.getElementById('result').innerHTML = 'Greška: ' + error.message;
         console.error('Error:', error);

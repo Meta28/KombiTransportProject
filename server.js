@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // API ključ (NE dijeli ga javno)
-const apiKey = 'AIzaSyB1mNQAD7JEoVAib3xjNlP_1DNIrlEHeiU';
+const apiKey = 'AIzaSyCz-7YPbN6P0DnEsCQvG_7e6bK6UEgWtUA';
 
 // Proxy endpoint za Google Routes API
 app.post('/api/route', async (req, res) => {

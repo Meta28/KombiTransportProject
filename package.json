@@ -1,19 +1,7 @@
 {
-  "name": "kombi-transport",
-  "version": "1.0.0",
-  "description": "Kombi Transport aplikacija za narudžbe",
-  "main": "backend/index.js",
-  "scripts": {
-    "start": "node backend/index.js"
-  },
-  "keywords": [],
-  "author": "Domagoj Miric",
-  "license": "ISC",
+  "type": "module",
   "dependencies": {
-    "@fullcalendar/core": "^6.1.15",
-    "@fullcalendar/daygrid": "^6.1.15",
-    "@fullcalendar/interaction": "^6.1.15",
-    "axios": "^1.6.0",
-    "express": "^4.18.2"
+    "express": "^4.17.1",
+    "dotenv": "^16.0.0"
   }
 }

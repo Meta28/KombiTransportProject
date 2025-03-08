@@ -1,52 +1,14 @@
 <!DOCTYPE html>
 <html lang="hr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kombi Transport</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="lib/fullcalendar-core.min.js"></script>
-  <script src="lib/fullcalendar-daygrid.min.js"></script>
-  <script src="lib/fullcalendar-interaction.min.js"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCz-7YPbN6P0DnEsCQvG_7e6bK6UEgWtUA&libraries=places&loading=async" async defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplikacija za upravljanje dostavama kombijem u Hrvatskoj.">
+    <title>Kombi Transport</title>
+    <link rel="stylesheet" href="../frontend/styles/main.css">
 </head>
 <body>
-  <div class="container">
-    <div class="sidebar">
-      <h2>Kombi Transport</h2>
-      <ul>
-        <li><a href="#">Početna</a></li>
-        <li><a href="#">Narudžbe</a></li>
-        <li><a href="#">Povijest</a></li>
-        <li><a href="#">Postavke</a></li>
-      </ul>
-    </div>
-
-    <main>
-      <h1>Dobrodošli u Kombi Transport</h1>
-      <p>Odaberite datum za narudžbu kombija:</p>
-      <div id="calendar"></div>
-
-      <form id="deliveryForm">
-        <h3>Unesite adrese za dostavu</h3>
-        <div id="addressFields">
-          <div class="address-field">
-            <label>Skladište (polazna točka):</label><br>
-            <input type="text" id="warehouse" class="address-input" placeholder="npr. Ulica 1, Zagreb" required>
-          </div>
-          <div class="address-field">
-            <label>Odredišna adresa 1:</label><br>
-            <input type="text" id="address1" class="address-input" placeholder="npr. Trg 5, Split" required>
-          </div>
-        </div>
-        <button type="button" id="addAddress">Dodaj još jednu adresu</button>
-        <button type="submit">Potvrdi narudžbu</button>
-      </form>
-
-      <div id="result"></div>
-    </main>
-  </div>
-
-  <script src="script.js"></script>
+    <iframe src="../frontend/index.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+    <script src="../frontend/scripts/main.js"></script>
 </body>
 </html>

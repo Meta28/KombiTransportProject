@@ -1,14 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Add event listener for the login button
     const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
         loginBtn.addEventListener('click', window.login);
     }
 
     const calendarEl = document.getElementById('calendar');
-    if (calendarEl && typeof FullCalendar !== 'undefined') {
+    if (calendarEl && typeof FullSMCalendar !== 'undefined') {
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
+            weekends: true,
             selectable: true,
             select: function(info) {
                 alert('Odabrali ste datum: ' + info.startStr);
@@ -19,10 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('FullCalendar nije dostupan ili nije ispravno učitan. Provjerite /lib/fullcalendar.min.js.');
     }
 
-    // Login funkcija
     window.login = function() {
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
+
+        console.log('Pokretanje prijave s korisničkim imenom:', username);
 
         fetch('/api/login', {
             method: 'POST',
@@ -30,10 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ username, password })
         })
         .then(response => {
+            console.log('Odgovor od /api/login:', response);
             if (!response.ok) throw new Error('Prijava nije uspjela');
             return response.json();
         })
         .then(data => {
+            console.log('Podaci od /api/login:', data);
             if (data.token) {
                 localStorage.setItem('token', data.token);
                 document.getElementById('loginForm').style.display = 'none';
@@ -42,32 +45,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Pogrešno korisničko ime ili lozinka');
             }
         })
-        .catch(error => console.error('Greška:', error));
+        .catch(error => {
+            console.error('Greška tijekom prijave:', error);
+            alert('Greška tijekom prijave: ' + error.message);
+        });
     };
 
     function initializeApp() {
         const token = localStorage.getItem('token');
-        if (token) {
-            fetch('/api/profile', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Greška pri dohvaćanju profila');
-                return response.json();
-            })
-            .then(data => {
+        if (!token) {
+            console.error('Nema tokena u localStorage.');
+            return;
+        }
+
+        console.log('Pokretanje initializeApp s tokenom:', token);
+
+        fetch('/api/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(response => {
+            console.log('Odgovor od /api/profile:', response);
+            if (!response.ok) throw new Error('Greška pri dohvaćanju profila');
+            return response.json();
+        })
+        .then(data => {
+            console.log('Podaci od /api/profile:', data);
+            if (data.user && data.user.role) {
                 document.getElementById('sidebar').style.display = 'block';
                 if (data.user.role === 'client') {
                     initializeClientInterface();
                 } else if (data.user.role === 'executor' || data.user.role === 'admin') {
                     initializeExecutorInterface();
+                } else {
+                    console.error('Nepoznata uloga korisnika:', data.user.role);
                 }
-            })
-            .catch(error => console.error('Greška:', error));
-        }
+            } else {
+                console.error('Podaci o korisniku nisu ispravni:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Greška pri dohvaćanju profila:', error);
+            alert('Greška pri dohvaćanju profila: ' + error.message);
+        });
     }
 
     function initializeClientInterface() {
+        console.log('Pokretanje initializeClientInterface');
         document.getElementById('clientInterface').style.display = 'block';
         document.getElementById('executorInterface').style.display = 'none';
         document.getElementById('sidebarMenu').innerHTML = `
@@ -94,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeExecutorInterface() {
+        console.log('Pokretanje initializeExecutorInterface');
         document.getElementById('executorInterface').style.display = 'block';
         document.getElementById('clientInterface').style.display = 'none';
         document.getElementById('sidebarMenu').innerHTML = `
@@ -111,6 +135,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     ordersDiv.style.display = 'block';
                 })
                 .catch(error => console.error('Greška:', error));
+        });
+        document.getElementById('showExecutorClients').addEventListener('click', () => {
+            console.log('Prikaz klijenata');
+        });
+        document.getElementById('showExecutorInvoices').addEventListener('click', () => {
+            console.log('Prikaz faktura');
         });
         document.getElementById('logout').addEventListener('click', () => {
             localStorage.removeItem('token');

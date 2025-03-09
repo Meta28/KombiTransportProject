@@ -1,8 +1,40 @@
 /* frontend/public/styles/main.css */
-.fc {
-    max-width: 1100px;
-    margin: 0 auto;
+body {
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+#app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#clientInterface {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#calendar {
+    width: 33.33%; /* Jedna trećina širine ekrana */
+    max-width: 400px; /* Maksimalna širina za kontrolu */
+    min-width: 300px; /* Minimalna širina za potpuni prikaz */
+    margin: 0 auto;
+}
+
+.fc {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+.fc-header-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .fc-button {
@@ -11,18 +43,27 @@
     color: white;
     border: none;
     cursor: pointer;
+    margin: 0 5px;
 }
 
 .fc-button:hover {
     background-color: #0056b3;
 }
 
+.fc-daygrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* Osigurava 7 dana u tjednu */
+}
+
 .fc-daygrid-day {
-    border: 1px solid #ddd;
+    border: 1px solid #eee;
+    text-align: center;
+    min-height: 80px; /* Osigurava prostor za dane */
 }
 
 .fc-daygrid-day-number {
     padding: 5px;
+    font-weight: bold;
 }
 
 .fc-daygrid-event {
@@ -30,4 +71,13 @@
     color: white;
     padding: 2px 5px;
     border-radius: 3px;
+    margin: 2px;
+}
+
+/* Responsivnost za male ekrane */
+@media (max-width: 600px) {
+    #calendar {
+        width: 100%; /* Na malim ekranima zauzima cijelu širinu */
+        max-width: 100%;
+    }
 }

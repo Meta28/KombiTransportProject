@@ -14,17 +14,19 @@ app.use(express.json());
 app.use('/api', apiRouter);
 
 // Posluživanje statičkih datoteka iz frontend/public
-app.use(express.static(path.join(__dirname, '../frontend/public'), { fallthrough: false }));
+app.use(express.static(path.join(__dirname, '../frontend/public'), {
+    fallthrough: false
+}));
 
-// Posluživanje index.html kao defaultnu stranicu
+// Posluživanje index.html kao defaultne stranice
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
 
-// Obrada grešaka za nedostajuće datoteke
+// Ignoriranje grešaka za nepostojeće CSS datoteke
 app.use((req, res, next) => {
-    if (req.path.startsWith('/lib/') || req.path.startsWith('/styles/')) {
-        res.status(404).send('Datoteka nije pronađena');
+    if (req.path === '/lib/fullcalendar.min.css') {
+        res.status(404).send('CSS datoteka nije prisutna, koristi vlastite stilove.');
     } else {
         next();
     }

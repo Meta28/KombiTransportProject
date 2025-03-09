@@ -1,1 +1,33 @@
-body { font-family: Arial, sans-serif; } #app { max-width: 1200px; margin: 0 auto; } button { padding: 10px 20px; margin: 5px; } #sidebar { float: left; width: 200px; background-color: #333; color: white; height: 100vh; } #sidebar ul { list-style: none; padding: 0; } #sidebar a { color: white; text-decoration: none; display: block; padding: 10px; }
+/* frontend/public/styles/main.css */
+.fc {
+    max-width: 1100px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+}
+
+.fc-button {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.fc-button:hover {
+    background-color: #0056b3;
+}
+
+.fc-daygrid-day {
+    border: 1px solid #ddd;
+}
+
+.fc-daygrid-day-number {
+    padding: 5px;
+}
+
+.fc-daygrid-event {
+    background-color: #28a745;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+}

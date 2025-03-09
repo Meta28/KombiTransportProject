@@ -1,8 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Add event listener for the login button
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', window.login);
+    }
+
     const calendarEl = document.getElementById('calendar');
     if (calendarEl && typeof FullCalendar !== 'undefined') {
         const calendar = new FullCalendar.Calendar(calendarEl, {
-            plugins: ['dayGrid', 'interaction'],
             initialView: 'dayGridMonth',
             selectable: true,
             select: function(info) {

@@ -1,16 +1,9 @@
-export function initializeCalendar(calendarEl, onEventClick, onDateClick) {
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        events: '/api/orders',
-        eventDataTransform: function(eventData) {
-            return {
-                title: eventData.customerName,
-                start: eventData.deliveryDate,
-                id: eventData.id
-            };
-        },
-        eventClick: onEventClick,
-        dateClick: onDateClick
+import { Calendar } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+
+export function initializeCalendar(el, options) {
+    return new Calendar(el, {
+        plugins: [dayGridPlugin],
+        ...options
     });
-    return calendar;
 }

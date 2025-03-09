@@ -1,8 +1,11 @@
 import express from 'express';
+import { authenticateToken } from '../middleware/auth.js';
+import { authorizeRole } from '../middleware/authorize.js';
+
 const router = express.Router();
 
-// Spremanje novog transporta s detaljima i generiranje fakture
-router.post('/orders', (req, res) => {
+// Spremanje novog transporta (naručitelj)
+router.post('/orders', authenticateToken, authorizeRole('client'), (req, res) => {
     const { customerName, warehouse, deliveryDate, addresses, urgentDelivery, customerOIB, customerAddress, executorName, executorOIB, executorAddress } = req.body;
     const db = req.db;
 
@@ -25,8 +28,8 @@ router.post('/orders', (req, res) => {
     const clientQuery = `INSERT OR IGNORE INTO clients (name, address) VALUES (?, ?)`;
     db.run(clientQuery, [customerName, validAddresses[0].address || null]);
 
-    const orderQuery = `INSERT INTO orders (customerName, warehouse, deliveryDate, urgentDelivery) VALUES (?, ?, ?, ?)`;
-    db.run(orderQuery, [customerName, warehouse, deliveryDate, urgentDelivery ? 1 : 0], function(err) {
+    const orderQuery = `INSERT INTO orders (customerName, warehouse, deliveryDate, urgentDelivery, status) VALUES (?, ?, ?, ?, ?)`;
+    db.run(orderQuery, [customerName, warehouse, deliveryDate, urgentDelivery ? 1 : 0, 'pending'], function(err) {
         if (err) {
             console.error('Greška pri spremanju transporta:', err);
             return res.status(500).json({ error: 'Greška pri spremanju transporta' });
@@ -55,30 +58,7 @@ router.post('/orders', (req, res) => {
                     ]);
                 });
                 db.run('COMMIT');
-
-                // Generiranje fakture nakon uspješnog spremanja transporta
-                const invoiceData = {
-                    orderId,
-                    customerName,
-                    customerOIB,
-                    customerAddress,
-                    executorName: executorName || 'Kombi Transport d.o.o.',
-                    executorOIB: executorOIB || '12345678901',
-                    executorAddress: executorAddress || 'Ulica Primjera 1, 10000 Zagreb'
-                };
-                fetch('http://localhost:5001/api/invoices', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(invoiceData)
-                })
-                .then(response => response.json())
-                .then(invoiceResponse => {
-                    res.status(201).json({ message: 'Transport uspješno spremljen', orderId, invoice: invoiceResponse.invoice });
-                })
-                .catch(error => {
-                    console.error('Greška pri generiranju fakture:', error);
-                    res.status(201).json({ message: 'Transport uspješno spremljen', orderId, invoiceError: 'Greška pri generiranju fakture' });
-                });
+                res.status(201).json({ message: 'Transport uspješno spremljen', orderId });
             } catch (err) {
                 db.run('ROLLBACK');
                 console.error('Greška pri spremanju detalja:', err);
@@ -88,8 +68,91 @@ router.post('/orders', (req, res) => {
     });
 });
 
-// Ostale rute (GET /orders, GET /orders/:id) ostaju nepromijenjene
-router.get('/orders/:id', (req, res) => {
+// Prihvaćanje narudžbe (izvršitelj)
+router.put('/orders/:id/accept', authenticateToken, authorizeRole('executor'), (req, res) => {
+    const db = req.db;
+    const orderId = req.params.id;
+
+    db.run('UPDATE orders SET status = ? WHERE id = ?', ['accepted', orderId], function(err) {
+        if (err) {
+            console.error('Greška pri prihvaćanju narudžbe:', err);
+            return res.status(500).json({ error: 'Greška pri prihvaćanju narudžbe' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Narudžba nije pronađena' });
+        }
+        res.json({ message: 'Narudžba uspješno prihvaćena' });
+    });
+});
+
+// Odbijanje narudžbe (izvršitelj)
+router.put('/orders/:id/reject', authenticateToken, authorizeRole('executor'), (req, res) => {
+    const db = req.db;
+    const orderId = req.params.id;
+
+    db.run('UPDATE orders SET status = ? WHERE id = ?', ['rejected', orderId], function(err) {
+        if (err) {
+            console.error('Greška pri odbijanju narudžbe:', err);
+            return res.status(500).json({ error: 'Greška pri odbijanju narudžbe' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Narudžba nije pronađena' });
+        }
+        res.json({ message: 'Narudžba uspješno odbijena' });
+    });
+});
+
+// Dohvaćanje narudžbi (razlikuje se ovisno o ulozi)
+router.get('/orders', authenticateToken, (req, res) => {
+    const db = req.db;
+    const query = `
+        SELECT o.*, od.*
+        FROM orders o
+        LEFT JOIN order_details od ON o.id = od.orderId
+        ORDER BY o.createdAt DESC
+    `;
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('Greška pri dohvaćanju transporta:', err);
+            return res.status(500).json({ error: 'Greška pri dohvaćanju transporta' });
+        }
+        const orders = {};
+        rows.forEach(row => {
+            if (!orders[row.id]) {
+                orders[row.id] = {
+                    id: row.id,
+                    customerName: row.customerName,
+                    warehouse: row.warehouse,
+                    deliveryDate: row.deliveryDate,
+                    urgentDelivery: row.urgentDelivery === 1,
+                    status: row.status,
+                    createdAt: row.createdAt,
+                    details: []
+                };
+            }
+            if (row.orderId) {
+                orders[row.id].details.push({
+                    address: row.address,
+                    weight: row.weight,
+                    dimensions: row.dimensions,
+                    article: row.article,
+                    sku: row.sku
+                });
+            }
+        });
+
+        // Filtriranje prema ulozi
+        if (req.user.role === 'client') {
+            const filteredOrders = Object.values(orders).filter(order => order.customerName === req.user.name);
+            res.json(filteredOrders);
+        } else {
+            res.json(Object.values(orders));
+        }
+    });
+});
+
+// Dohvaćanje pojedine narudžbe
+router.get('/orders/:id', authenticateToken, (req, res) => {
     const db = req.db;
     const orderId = req.params.id;
     const query = `
@@ -112,6 +175,7 @@ router.get('/orders/:id', (req, res) => {
             warehouse: rows[0].warehouse,
             deliveryDate: rows[0].deliveryDate,
             urgentDelivery: rows[0].urgentDelivery === 1,
+            status: rows[0].status,
             createdAt: rows[0].createdAt,
             details: rows.map(row => ({
                 address: row.address,
@@ -121,52 +185,16 @@ router.get('/orders/:id', (req, res) => {
                 sku: row.sku
             })).filter(d => d.address)
         };
+        // Provjera uloge
+        if (req.user.role === 'client' && order.customerName !== req.user.name) {
+            return res.status(403).json({ error: 'Nedozvoljen pristup' });
+        }
         res.json(order);
     });
 });
 
-router.get('/orders', (req, res) => {
-    const db = req.db;
-    const query = `
-        SELECT o.*, od.*
-        FROM orders o
-        LEFT JOIN order_details od ON o.id = od.orderId
-        ORDER BY o.createdAt DESC
-    `;
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Greška pri dohvaćanju transporta:', err);
-            return res.status(500).json({ error: 'Greška pri dohvaćanju transporta' });
-        }
-        const orders = {};
-        rows.forEach(row => {
-            if (!orders[row.id]) {
-                orders[row.id] = {
-                    id: row.id,
-                    customerName: row.customerName,
-                    warehouse: row.warehouse,
-                    deliveryDate: row.deliveryDate,
-                    urgentDelivery: row.urgentDelivery === 1,
-                    createdAt: row.createdAt,
-                    details: []
-                };
-            }
-            if (row.orderId) {
-                orders[row.id].details.push({
-                    address: row.address,
-                    weight: row.weight,
-                    dimensions: row.dimensions,
-                    article: row.article,
-                    sku: row.sku
-                });
-            }
-        });
-        res.json(Object.values(orders));
-    });
-});
-
-// Ostale rute (clients) ostaju nepromijenjene
-router.get('/clients/search', (req, res) => {
+// Rute za klijente
+router.get('/clients/search', authenticateToken, (req, res) => {
     const db = req.db;
     const name = req.query.name || '';
     const query = `SELECT * FROM clients WHERE name LIKE ? LIMIT 5`;
@@ -179,7 +207,7 @@ router.get('/clients/search', (req, res) => {
     });
 });
 
-router.post('/clients', (req, res) => {
+router.post('/clients', authenticateToken, authorizeRole('executor'), (req, res) => {
     const { name, phone, email, address } = req.body;
     const db = req.db;
 
@@ -197,7 +225,7 @@ router.post('/clients', (req, res) => {
     });
 });
 
-router.get('/clients', (req, res) => {
+router.get('/clients', authenticateToken, authorizeRole('executor'), (req, res) => {
     const db = req.db;
     const query = `SELECT * FROM clients ORDER BY createdAt DESC`;
     db.all(query, [], (err, rows) => {

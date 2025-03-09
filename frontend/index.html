@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="/public/lib/fullcalendar.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.5/main.min.css" rel="stylesheet" />
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCz-7YPbN6P0DnEsCQvG_7e6bK6UEgWtUA&libraries=places&loading=async" async defer></script>
     <link rel="stylesheet" href="/frontend/styles/main.css">
     <style>
         .modal {
@@ -72,6 +71,12 @@
         #suggestions div:hover {
             background: #f0f0f0;
         }
+        #loginForm, #executorInterface, #clientInterface {
+            display: none;
+        }
+        #switchButtons {
+            margin: 10px 0;
+        }
         #invoiceDetails {
             display: none;
             margin-top: 20px;
@@ -82,91 +87,78 @@
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <h2>Kombi Transport</h2>
-            <ul>
-                <li><a href="/">Početna</a></li>
-                <li>
-                    <a href="/naruci-transport" class="dropdown-toggle">Naruči transport</a>
-                    <ul class="dropdown">
-                        <li><a href="#" id="showOrders" onclick="showOrderForm()">Novi transport</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="dropdown-toggle">Prijašnji transporti</a>
-                    <ul class="dropdown">
-                        <li><a href="#" id="showHistory">Popis transporta</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="dropdown-toggle">Fakture</a>
-                    <ul class="dropdown">
-                        <li><a href="#" id="showInvoices">Popis faktura</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="dropdown-toggle">Klijenti</a>
-                    <ul class="dropdown">
-                        <li><a href="#" id="showClients">Popis klijenata</a></li>
-                        <li><a href="#" id="addClient">Novi klijent</a></li>
-                    </ul>
-                </li>
-                <li><a href="#">Postavke</a></li>
-            </ul>
+            <ul id="sidebarMenu"></ul>
         </div>
         <main>
-            <h1 id="pageTitle">Dobrodošli u Kombi Transport</h1>
-            <p id="welcomeMessage">Za naručivanje transporta kliknite na <a href="/naruci-transport">Naruči transport</a>.</p>
-            <div id="calendar" style="display: none;"></div>
-            <form id="deliveryForm" style="display: none;">
-                <h3>Unesite podatke za transport</h3>
-                <p class="info-message">Napomena: Autocompletiranje adresa trenutno nije dostupno dok čekamo aktivaciju API-ja. Unesite adrese ručno.</p>
-                <div id="addressFields">
-                    <div class="address-field">
-                        <label>Datum dostave:</label><br>
-                        <input type="text" id="deliveryDate" class="address-input" readonly required>
-                    </div>
-                    <div class="address-field">
-                        <label>Ime kupca (naručitelj):</label><br>
-                        <input type="text" id="customerName" class="address-input" placeholder="Unesite ime kupca" required>
-                        <div id="suggestions"></div>
-                    </div>
-                    <div class="address-field">
-                        <label>OIB kupca:</label><br>
-                        <input type="text" id="customerOIB" class="address-input" placeholder="Unesite OIB kupca">
-                    </div>
-                    <div class="address-field">
-                        <label>Adresa kupca:</label><br>
-                        <input type="text" id="customerAddress" class="address-input" placeholder="Unesite adresu kupca" required>
-                    </div>
-                    <div class="address-field">
-                        <label>Skladište (polazna točka):</label><br>
-                        <input type="text" id="warehouse" class="address-input" placeholder="Unesite adresu skladišta" required>
-                    </div>
-                </div>
-                <div id="deliveryDetails"></div>
-                <div class="address-field">
-                    <label>Hitna dostava:</label><br>
-                    <input type="checkbox" id="urgentDelivery">
-                </div>
-                <button type="button" id="addAddress">Dodaj adresu dostave</button>
-                <button type="submit">Transport</button>
-                <button type="button" id="viewCosts">Pregled troškova</button>
-            </form>
-            <div id="result"></div>
-            <div id="history" style="display: none;"></div>
-            <div id="clients" style="display: none;"></div>
-            <div id="invoices" style="display: none;"></div>
-            <div id="modal" class="modal">
-                <div class="modal-content">
-                    <span class="close">×</span>
-                    <h3>Detalji transporta</h3>
-                    <div id="modalDetails"></div>
-                </div>
+            <div id="switchButtons">
+                <button id="switchToExecutorBtn">Izvršitelj</button>
+                <button id="switchToClientBtn">Naručitelj</button>
             </div>
-            <div id="invoiceDetails">
-                <h3>Detalji fakture</h3>
-                <p id="invoiceInfo"></p>
+            <div id="loginForm">
+                <h3>Prijava</h3>
+                <input type="text" id="loginUsername" placeholder="Korisničko ime" class="address-input"><br>
+                <input type="password" id="loginPassword" placeholder="Lozinka" class="address-input"><br>
+                <button onclick="login()">Prijavi se</button>
+            </div>
+            <div id="executorInterface">
+                <h1 id="executorPageTitle">Izvršitelj - Upravljanje narudžbama</h1>
+                <div id="executorOrders" style="display: none;"></div>
+                <div id="executorClients" style="display: none;"></div>
+                <div id="executorInvoices" style="display: none;"></div>
+            </div>
+            <div id="clientInterface">
+                <h1 id="clientPageTitle">Naručitelj - Naručivanje transporta</h1>
+                <div id="calendar" style="display: none;"></div>
+                <form id="deliveryForm" style="display: none;">
+                    <h3>Unesite podatke za transport</h3>
+                    <div id="addressFields">
+                        <div class="address-field">
+                            <label>Datum dostave:</label><br>
+                            <input type="text" id="deliveryDate" class="address-input" readonly required>
+                        </div>
+                        <div class="address-field">
+                            <label>Ime kupca (naručitelj):</label><br>
+                            <input type="text" id="customerName" class="address-input" placeholder="Unesite ime kupca" required>
+                            <div id="suggestions"></div>
+                        </div>
+                        <div class="address-field">
+                            <label>OIB kupca:</label><br>
+                            <input type="text" id="customerOIB" class="address-input" placeholder="Unesite OIB kupca">
+                        </div>
+                        <div class="address-field">
+                            <label>Adresa kupca:</label><br>
+                            <input type="text" id="customerAddress" class="address-input" placeholder="Unesite adresu kupca" required>
+                        </div>
+                        <div class="address-field">
+                            <label>Skladište (polazna točka):</label><br>
+                            <input type="text" id="warehouse" class="address-input" placeholder="Unesite adresu skladišta" required>
+                        </div>
+                    </div>
+                    <div id="deliveryDetails"></div>
+                    <div class="address-field">
+                        <label>Hitna dostava:</label><br>
+                        <input type="checkbox" id="urgentDelivery">
+                    </div>
+                    <button type="button" id="addAddress">Dodaj adresu dostave</button>
+                    <button type="submit">Transport</button>
+                    <button type="button" id="viewCosts">Pregled troškova</button>
+                </form>
+                <div id="clientOrders" style="display: none;"></div>
+                <div id="clientInvoices" style="display: none;"></div>
+                <div id="result"></div>
+                <div id="modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">×</span>
+                        <h3>Detalji transporta</h3>
+                        <div id="modalDetails"></div>
+                    </div>
+                </div>
+                <div id="invoiceDetails">
+                    <h3>Detalji fakture</h3>
+                    <p id="invoiceInfo"></p>
+                </div>
             </div>
         </main>
     </div>

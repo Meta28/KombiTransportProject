@@ -1,4 +1,3 @@
-/* frontend/public/styles/main.css */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -11,16 +10,17 @@ body {
     padding: 20px;
 }
 
-#clientInterface {
+#clientInterface, #executorInterface {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding-left: 220px;
 }
 
 #calendar {
-    width: 33.33%; /* Jedna trećina širine ekrana */
-    max-width: 400px; /* Maksimalna širina za kontrolu */
-    min-width: 300px; /* Minimalna širina za potpuni prikaz */
+    width: 33.33%;
+    max-width: 400px;
+    min-width: 300px;
     margin: 0 auto;
 }
 
@@ -52,13 +52,13 @@ body {
 
 .fc-daygrid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* Osigurava 7 dana u tjednu */
+    grid-template-columns: repeat(7, 1fr);
 }
 
 .fc-daygrid-day {
     border: 1px solid #eee;
     text-align: center;
-    min-height: 80px; /* Osigurava prostor za dane */
+    min-height: 80px;
 }
 
 .fc-daygrid-day-number {
@@ -74,10 +74,85 @@ body {
     margin: 2px;
 }
 
-/* Responsivnost za male ekrane */
 @media (max-width: 600px) {
     #calendar {
-        width: 100%; /* Na malim ekranima zauzima cijelu širinu */
+        width: 100%;
         max-width: 100%;
     }
+    #clientInterface, #executorInterface {
+        padding-left: 0;
+    }
+}
+
+#loginForm {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#loginForm input, #deliveryForm input {
+    margin: 5px;
+    padding: 8px;
+    width: 200px;
+}
+
+#loginForm button, #deliveryForm button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#loginForm button:hover, #deliveryForm button:hover {
+    background-color: #0056b3;
+}
+
+#sidebar {
+    width: 200px;
+    background-color: #f8f9fa;
+    padding: 10px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+#sidebar h2 {
+    margin: 0 0 20px 0;
+    font-size: 1.5em;
+}
+
+#sidebarMenu li {
+    list-style: none;
+    margin: 10px 0;
+}
+
+#sidebarMenu a {
+    text-decoration: none;
+    color: #333;
+    font-size: 1.1em;
+}
+
+#sidebarMenu a:hover {
+    color: #007bff;
+}
+
+#switchToExecutorBtn, #switchToClientBtn {
+    padding: 8px 16px;
+    margin: 5px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#switchToExecutorBtn:hover, #switchToClientBtn:hover {
+    background-color: #5a6268;
+}
+
+#formMessage {
+    margin-top: 10px;
+    text-align: center;
 }

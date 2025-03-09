@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kombi Transport</title>
     <link rel="stylesheet" href="/styles/main.css">
-    <!-- Uklonjen link za /lib/fullcalendar.min.css -->
 </head>
 <body>
     <div id="app">
@@ -13,12 +12,13 @@
         <button id="switchToClientBtn">Naručitelj</button>
         <div id="executorInterface" style="display: none;">
             <h2>Izvršitelj - Upravljanje transportima</h2>
+            <div id="executorOrders" style="display: none;"></div>
         </div>
         <div id="clientInterface" style="display: none;">
             <h2>Naručitelj - Naručivanje transporta</h2>
             <div id="calendar"></div>
             <div id="deliveryForm" style="display: none;">
-                <form>
+                <form id="deliveryFormSubmit">
                     <input type="date" id="deliveryDate" required>
                     <input type="text" id="customerName" placeholder="Ime kupca" required>
                     <input type="text" id="customerOIB" placeholder="OIB kupca" required>
@@ -27,6 +27,7 @@
                     <label><input type="checkbox" id="urgentDelivery"> Hitna dostava</label>
                     <button type="submit">Pošalji narudžbu</button>
                 </form>
+                <div id="formMessage"></div>
             </div>
             <div id="clientOrders" style="display: none;"></div>
             <div id="clientInvoices" style="display: none;"></div>

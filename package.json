@@ -1,20 +1,14 @@
 {
+  "name": "kombi-transport",
+  "version": "1.0.0",
   "type": "module",
-  "dependencies": {
-    "bcrypt": "^5.1.1",
-    "dotenv": "^16.0.0",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "sqlite3": "^5.1.7",
-    "@fullcalendar/core": "^6.1.15",
-    "@fullcalendar/daygrid": "^6.1.15",
-    "@fullcalendar/interaction": "^6.1.15"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.0"
-  },
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.0"
   }
 }

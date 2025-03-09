@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       calendar.render();
   } else {
-      console.error('FullCalendar nije dostupan ili nije ispravno učitan.');
+      console.error('FullCalendar nije dostupan ili nije ispravno učitan. Provjerite /lib/fullcalendar.min.js.');
+      // Opcionalno: Dodaj fallback UI ako želiš
   }
 
   // Login funkcija

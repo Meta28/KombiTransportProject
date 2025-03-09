@@ -14,17 +14,23 @@ app.use(express.json());
 app.use('/api', apiRouter);
 
 // Posluživanje statičkih datoteka iz frontend/public
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static(path.join(__dirname, '../frontend/public'), { fallthrough: false }));
 
-// Posluživanje datoteka iz frontend/src
-app.use('/src', express.static(path.join(__dirname, '../frontend/src')));
-
-// Posluživanje index.html
+// Posluživanje index.html kao defaultnu stranicu
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
 
-// Obrada grešaka
+// Obrada grešaka za nedostajuće datoteke
+app.use((req, res, next) => {
+    if (req.path.startsWith('/lib/') || req.path.startsWith('/styles/')) {
+        res.status(404).send('Datoteka nije pronađena');
+    } else {
+        next();
+    }
+});
+
+// Glavna obrada grešaka
 app.use((err, req, res, next) => {
     console.error('Greška:', err.stack);
     res.status(500).json({ error: 'Interna greška servera' });

@@ -1,167 +1,53 @@
 <!DOCTYPE html>
-<html lang="hr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Aplikacija za upravljanje dostavama kombijem u Hrvatskoj.">
     <title>Kombi Transport</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="/public/lib/fullcalendar.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.5/main.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/frontend/styles/main.css">
-    <style>
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 20px;
-            width: 70%;
-            max-width: 500px;
-            z-index: 1001;
-        }
-        .close {
-            float: right;
-            cursor: pointer;
-        }
-        .sidebar ul .dropdown {
-            display: none;
-            list-style-type: none;
-            padding-left: 20px;
-        }
-        .sidebar ul li:hover .dropdown {
-            display: block;
-        }
-        .dropdown-toggle {
-            cursor: pointer;
-        }
-        .address-field label {
-            margin-bottom: 5px;
-            display: block;
-        }
-        .address-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        #suggestions {
-            position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            max-height: 150px;
-            overflow-y: auto;
-            display: none;
-            z-index: 1002;
-        }
-        #suggestions div {
-            padding: 5px;
-            cursor: pointer;
-        }
-        #suggestions div:hover {
-            background: #f0f0f0;
-        }
-        #loginForm, #executorInterface, #clientInterface {
-            display: none;
-        }
-        #switchButtons {
-            margin: 10px 0;
-        }
-        #invoiceDetails {
-            display: none;
-            margin-top: 20px;
-            border: 1px solid #ccc;
-            padding: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/lib/fullcalendar.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar" id="sidebar">
+    <div id="app">
+        <button id="switchToExecutorBtn">Izvršitelj</button>
+        <button id="switchToClientBtn">Naručitelj</button>
+        <div id="executorInterface" style="display: none;">
+            <h2>Izvršitelj - Upravljanje transportima</h2>
+        </div>
+        <div id="clientInterface" style="display: none;">
+            <h2>Naručitelj - Naručivanje transporta</h2>
+            <div id="calendar"></div>
+            <div id="deliveryForm" style="display: none;">
+                <form>
+                    <input type="date" id="deliveryDate" required>
+                    <input type="text" id="customerName" placeholder="Ime kupca" required>
+                    <input type="text" id="customerOIB" placeholder="OIB kupca" required>
+                    <input type="text" id="customerAddress" placeholder="Adresa kupca" required>
+                    <input type="text" id="warehouse" placeholder="Skladište" required>
+                    <label><input type="checkbox" id="urgentDelivery"> Hitna dostava</label>
+                    <button type="submit">Pošalji narudžbu</button>
+                </form>
+            </div>
+            <div id="clientOrders" style="display: none;"></div>
+            <div id="clientInvoices" style="display: none;"></div>
+        </div>
+        <div id="loginForm" style="display: block;">
+            <input type="text" id="loginUsername" placeholder="Korisničko ime">
+            <input type="password" id="loginPassword" placeholder="Lozinka">
+            <button onclick="login()">Prijava</button>
+        </div>
+        <div id="sidebar" style="display: none;">
             <h2>Kombi Transport</h2>
             <ul id="sidebarMenu"></ul>
         </div>
-        <main>
-            <div id="switchButtons">
-                <button id="switchToExecutorBtn">Izvršitelj</button>
-                <button id="switchToClientBtn">Naručitelj</button>
+        <div id="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">×</span>
+                <div id="modalDetails"></div>
             </div>
-            <div id="loginForm">
-                <h3>Prijava</h3>
-                <input type="text" id="loginUsername" placeholder="Korisničko ime" class="address-input"><br>
-                <input type="password" id="loginPassword" placeholder="Lozinka" class="address-input"><br>
-                <button onclick="login()">Prijavi se</button>
-            </div>
-            <div id="executorInterface">
-                <h1 id="executorPageTitle">Izvršitelj - Upravljanje narudžbama</h1>
-                <div id="executorOrders" style="display: none;"></div>
-                <div id="executorClients" style="display: none;"></div>
-                <div id="executorInvoices" style="display: none;"></div>
-            </div>
-            <div id="clientInterface">
-                <h1 id="clientPageTitle">Naručitelj - Naručivanje transporta</h1>
-                <div id="calendar" style="display: none;"></div>
-                <form id="deliveryForm" style="display: none;">
-                    <h3>Unesite podatke za transport</h3>
-                    <div id="addressFields">
-                        <div class="address-field">
-                            <label>Datum dostave:</label><br>
-                            <input type="text" id="deliveryDate" class="address-input" readonly required>
-                        </div>
-                        <div class="address-field">
-                            <label>Ime kupca (naručitelj):</label><br>
-                            <input type="text" id="customerName" class="address-input" placeholder="Unesite ime kupca" required>
-                            <div id="suggestions"></div>
-                        </div>
-                        <div class="address-field">
-                            <label>OIB kupca:</label><br>
-                            <input type="text" id="customerOIB" class="address-input" placeholder="Unesite OIB kupca">
-                        </div>
-                        <div class="address-field">
-                            <label>Adresa kupca:</label><br>
-                            <input type="text" id="customerAddress" class="address-input" placeholder="Unesite adresu kupca" required>
-                        </div>
-                        <div class="address-field">
-                            <label>Skladište (polazna točka):</label><br>
-                            <input type="text" id="warehouse" class="address-input" placeholder="Unesite adresu skladišta" required>
-                        </div>
-                    </div>
-                    <div id="deliveryDetails"></div>
-                    <div class="address-field">
-                        <label>Hitna dostava:</label><br>
-                        <input type="checkbox" id="urgentDelivery">
-                    </div>
-                    <button type="button" id="addAddress">Dodaj adresu dostave</button>
-                    <button type="submit">Transport</button>
-                    <button type="button" id="viewCosts">Pregled troškova</button>
-                </form>
-                <div id="clientOrders" style="display: none;"></div>
-                <div id="clientInvoices" style="display: none;"></div>
-                <div id="result"></div>
-                <div id="modal" class="modal">
-                    <div class="modal-content">
-                        <span class="close">×</span>
-                        <h3>Detalji transporta</h3>
-                        <div id="modalDetails"></div>
-                    </div>
-                </div>
-                <div id="invoiceDetails">
-                    <h3>Detalji fakture</h3>
-                    <p id="invoiceInfo"></p>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
-    <script type="module" src="/frontend/scripts/main.js"></script>
+    <script src="/lib/fullcalendar.min.js"></script>
+    <script src="/src/main.js"></script>
 </body>
 </html>

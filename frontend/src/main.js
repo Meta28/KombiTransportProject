@@ -1,69 +1,122 @@
-// Uvoz FullCalendar biblioteke
-import { Calendar } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-
-// Prikaz kalendara
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
   const calendarEl = document.getElementById('calendar');
-  const calendar = new Calendar(calendarEl, {
-    plugins: [dayGridPlugin, interactionPlugin],
-    initialView: 'dayGridMonth',
-    selectable: true,
-    select: function(info) {
-      alert('Odabrali ste datum: ' + info.startStr);
-    }
-  });
-  calendar.render();
-});
-
-// Dodavanje više adresa
-const addresses = document.getElementById("addresses");
-document.getElementById("add-address").addEventListener("click", () => {
-  const addressField = document.createElement("div");
-  addressField.classList.add("address-field");
-  addressField.innerHTML = `<input type="text" placeholder="Adresa dostave" class="address-input" />`;
-  addresses.appendChild(addressField);
-});
-
-// Kalkulacija rute s API pozivom
-document.getElementById("calculate-route").addEventListener("click", async () => {
-  const allAddresses = [...document.querySelectorAll(".address-input")]
-    .map(input => input.value)
-    .filter(addr => addr.trim() !== "");
-
-  if (allAddresses.length < 2) {
-    document.getElementById("route-result").textContent = "Unesite najmanje dvije adrese.";
-    return;
+  if (calendarEl && typeof FullCalendar !== 'undefined') {
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+          plugins: ['dayGrid', 'interaction'],
+          initialView: 'dayGridMonth',
+          selectable: true,
+          select: function(info) {
+              alert('Odabrali ste datum: ' + info.startStr);
+          }
+      });
+      calendar.render();
+  } else {
+      console.error('FullCalendar nije dostupan ili nije ispravno učitan.');
   }
 
-  try {
-    const response = await fetch('http://localhost:5001/api/route', {  // Promijenjeno: Dodan cijeli URL
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        origins: [allAddresses[0]],
-        destinations: allAddresses.slice(1)
+  // Login funkcija
+  window.login = function() {
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
       })
-    });
+      .then(response => {
+          if (!response.ok) throw new Error('Prijava nije uspjela');
+          return response.json();
+      })
+      .then(data => {
+          if (data.token) {
+              localStorage.setItem('token', data.token);
+              document.getElementById('loginForm').style.display = 'none';
+              initializeApp();
+          } else {
+              alert('Pogrešno korisničko ime ili lozinka');
+          }
+      })
+      .catch(error => console.error('Greška:', error));
+  };
 
-    const data = await response.json();
-
-    if (data.error) {
-      document.getElementById("route-result").textContent = "Greška: " + data.error;
-    } else {
-      const totalDistance = data.routes[0].distanceMeters / 1000;
-      const totalPrice = totalDistance * 0.5;
-      document.getElementById("route-result").innerHTML = `
-        <h3>Rezultat</h3>
-        <p>Ukupna udaljenost: ${totalDistance.toFixed(2)} km</p>
-        <p>Cijena dostave: ${totalPrice.toFixed(2)} EUR</p>
-      `;
-    }
-  } catch (error) {
-    document.getElementById("route-result").textContent = "Greška prilikom izračuna rute.";
-    console.error("Greška:", error);
+  function initializeApp() {
+      const token = localStorage.getItem('token');
+      if (token) {
+          fetch('/api/profile', {
+              headers: { 'Authorization': `Bearer ${token}` }
+          })
+          .then(response => {
+              if (!response.ok) throw new Error('Greška pri dohvaćanju profila');
+              return response.json();
+          })
+          .then(data => {
+              document.getElementById('sidebar').style.display = 'block';
+              if (data.user.role === 'client') {
+                  initializeClientInterface();
+              } else if (data.user.role === 'executor' || data.user.role === 'admin') {
+                  initializeExecutorInterface();
+              }
+          })
+          .catch(error => console.error('Greška:', error));
+      }
   }
+
+  function initializeClientInterface() {
+      document.getElementById('clientInterface').style.display = 'block';
+      document.getElementById('executorInterface').style.display = 'none';
+      document.getElementById('sidebarMenu').innerHTML = `
+          <li><a href="#" id="showClientOrders">Moji transporti</a></li>
+          <li><a href="#" id="showClientNewOrder">Novi transport</a></li>
+          <li><a href="#" id="showClientInvoices">Moje fakture</a></li>
+          <li><a href="#" id="logout">Odjava</a></li>
+      `;
+      document.getElementById('showClientOrders').addEventListener('click', () => {
+          fetch('/api/orders', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+              .then(response => response.json())
+              .then(orders => {
+                  const ordersDiv = document.getElementById('clientOrders');
+                  ordersDiv.innerHTML = '<h3>Moji transporti</h3>' + orders.map(order => `<p>ID: ${order.id}, Kupac: ${order.customerName}</p>`).join('');
+                  ordersDiv.style.display = 'block';
+              })
+              .catch(error => console.error('Greška:', error));
+      });
+      document.getElementById('showClientNewOrder').addEventListener('click', showOrderForm);
+      document.getElementById('logout').addEventListener('click', () => {
+          localStorage.removeItem('token');
+          location.reload();
+      });
+  }
+
+  function initializeExecutorInterface() {
+      document.getElementById('executorInterface').style.display = 'block';
+      document.getElementById('clientInterface').style.display = 'none';
+      document.getElementById('sidebarMenu').innerHTML = `
+          <li><a href="#" id="showExecutorOrders">Svi transporti</a></li>
+          <li><a href="#" id="showExecutorClients">Klijenti</a></li>
+          <li><a href="#" id="showExecutorInvoices">Fakture</a></li>
+          <li><a href="#" id="logout">Odjava</a></li>
+      `;
+      document.getElementById('showExecutorOrders').addEventListener('click', () => {
+          fetch('/api/orders', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+              .then(response => response.json())
+              .then(orders => {
+                  const ordersDiv = document.getElementById('executorOrders');
+                  ordersDiv.innerHTML = '<h3>Svi transporti</h3>' + orders.map(order => `<p>ID: ${order.id}, Kupac: ${order.customerName}</p>`).join('');
+                  ordersDiv.style.display = 'block';
+              })
+              .catch(error => console.error('Greška:', error));
+      });
+      document.getElementById('logout').addEventListener('click', () => {
+          localStorage.removeItem('token');
+          location.reload();
+      });
+  }
+
+  function showOrderForm() {
+      document.getElementById('deliveryForm').style.display = 'block';
+  }
+
+  document.getElementById('switchToExecutorBtn').addEventListener('click', initializeExecutorInterface);
+  document.getElementById('switchToClientBtn').addEventListener('click', initializeClientInterface);
 });

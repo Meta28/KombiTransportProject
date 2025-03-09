@@ -1,0 +1,1 @@
+body { font-family: Arial, sans-serif; } #app { max-width: 1200px; margin: 0 auto; } button { padding: 10px 20px; margin: 5px; } #sidebar { float: left; width: 200px; background-color: #333; color: white; height: 100vh; } #sidebar ul { list-style: none; padding: 0; } #sidebar a { color: white; text-decoration: none; display: block; padding: 10px; }

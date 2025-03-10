@@ -2,10 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import db from './database.js';
-
 import orderRoutes from './routes/orderRoutes.js';
-import invoiceRoutes from './routes/invoiceRoutes.js';
+import clientRoutes from './routes/clientRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
@@ -22,21 +21,8 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Postavljanje ruta
 app.use('/api/orders', orderRoutes);
-app.use('/api/invoices', invoiceRoutes);
-
-// API za dohvaćanje svih adresa
-app.get('/api/addresses', (req, res) => {
-  console.log('Fetching addresses from database...');
-  db.all('SELECT * FROM addresses', [], (err, rows) => {
-    if (err) {
-      console.error('Error fetching addresses:', err.message);
-      res.status(500).json({ error: 'Failed to fetch addresses', details: err.message });
-      return;
-    }
-    console.log('Addresses fetched:', rows);
-    res.json(rows);
-  });
-});
+app.use('/api/clients', clientRoutes);
+app.use('/api/users', userRoutes);
 
 // Pokretanje servera
 const PORT = process.env.PORT || 5001;

@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kombi Transport</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Flatpickr CSS za kalendar -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     body {
@@ -29,6 +27,7 @@
       text-decoration: none;
       display: block;
       padding: 10px 0;
+      cursor: pointer;
     }
     .sidebar a:hover {
       background-color: #495057;
@@ -40,128 +39,713 @@
     .card {
       margin-top: 20px;
     }
-    #summary {
+    #summary, #invoice {
       margin-top: 20px;
       padding: 15px;
       border: 1px solid #007bff;
       border-radius: 5px;
       background-color: #e9f7ff;
     }
+    .alert {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
   <div class="sidebar">
     <h2>Kombi Transport</h2>
-    <a href="#">Početna</a>
-    <a href="#">Narudžbe</a>
-    <a href="#">Povijest</a>
-    <a href="#">Postavke</a>
+    <a onclick="showSection('login')">Prijava</a>
+    <a onclick="showSection('register')">Registracija</a>
+    <a onclick="showSection('profile')">Profil</a>
+    <a onclick="showSection('orderTransport')">Narudžba transporta</a>
+    <a onclick="showSection('clients')">Klijenti</a>
+    <a onclick="showSection('orders')">Narudžbe</a>
+    <a onclick="showSection('history')">Povijest
+      <ul style="list-style-type: none; padding-left: 20px;">
+        <li><a onclick="showSection('historyDone')">Odradeno</a></li>
+        <li><a onclick="showSection('historyCanceled')">Otkazano</a></li>
+        <li><a onclick="showSection('historyInProgress')">U tijeku</a></li>
+      </ul>
+    </a>
+    <a onclick="logout()">Odjava</a>
   </div>
 
-  <!-- Main content -->
   <div class="content">
-    <h1>Dobrodošli u Kombi Transport</h1>
-    <h3>Odaberite datum za narudžbu kombija:</h3>
-    <input type="text" id="datePicker" class="form-control mb-3" placeholder="Odaberite datum">
+    <div id="login-section" style="display: none;">
+      <h1>Prijava</h1>
+      <form id="loginForm">
+        <div class="mb-3">
+          <label for="loginEmail" class="form-label">Email:</label>
+          <input type="email" id="loginEmail" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="loginPassword" class="form-label">Lozinka:</label>
+          <input type="password" id="loginPassword" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Prijavi se</button>
+      </form>
+    </div>
 
-    <div class="card">
-      <div class="card-body">
-        <h2>Unesite adrese za dostavu</h2>
-        <form id="orderForm">
-          <div class="mb-3">
-            <label for="warehouse" class="form-label">Skladište (polazna točka):</label>
-            <select id="warehouse" class="form-select" required>
-              <option value="" disabled selected>Odaberite skladište</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="destination1" class="form-label">Odredišna adresa 1:</label>
-            <input type="text" id="destination1" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label for="destination2" class="form-label">Odredišna adresa 2 (opcionalno):</label>
-            <input type="text" id="destination2" class="form-control">
-          </div>
-          <button type="submit" class="btn btn-success">Potvrdi narudžbu</button>
-        </form>
+    <div id="register-section" style="display: none;">
+      <h1>Registracija</h1>
+      <form id="registerForm">
+        <div class="mb-3">
+          <label for="registerCompanyName" class="form-label">Naziv tvrtke:</label>
+          <input type="text" id="registerCompanyName" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="registerEmail" class="form-label">Email:</label>
+          <input type="email" id="registerEmail" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="registerPassword" class="form-label">Lozinka:</label>
+          <input type="password" id="registerPassword" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="registerAddress" class="form-label">Adresa tvrtke:</label>
+          <input type="text" id="registerAddress" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="registerWarehouseAddresses" class="form-label">Adrese skladišta (jedna po retku):</label>
+          <textarea id="registerWarehouseAddresses" class="form-control" placeholder="Skladište 1, Zagreb\nSkladište 2, Split"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Registriraj se</button>
+      </form>
+    </div>
+
+    <div id="profile-section" style="display: none;">
+      <h1>Profil</h1>
+      <form id="profileForm">
+        <div class="mb-3">
+          <label for="profileCompanyName" class="form-label">Naziv tvrtke:</label>
+          <input type="text" id="profileCompanyName" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="profileAddress" class="form-label">Adresa tvrtke:</label>
+          <input type="text" id="profileAddress" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="profileWarehouseAddresses" class="form-label">Adrese skladišta (jedna po retku):</label>
+          <textarea id="profileWarehouseAddresses" class="form-control" placeholder="Skladište 1, Zagreb\nSkladište 2, Split"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Ažuriraj profil</button>
+      </form>
+    </div>
+
+    <div id="orderTransport-section" style="display: none;">
+      <h1>Narudžba transporta</h1>
+      <h3>Odaberite datum za narudžbu kombija:</h3>
+      <input type="text" id="datePicker" class="form-control mb-3" placeholder="Odaberite datum">
+
+      <div class="card">
+        <div class="card-body">
+          <h2>Unesite adrese za dostavu</h2>
+          <form id="orderForm">
+            <div class="mb-3">
+              <label for="client" class="form-label">Klijent:</label>
+              <select id="client" class="form-select" required>
+                <option value="" disabled selected>Odaberite klijenta</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="warehouse" class="form-label">Skladište (polazna točka):</label>
+              <select id="warehouse" class="form-select" required>
+                <option value="" disabled selected>Odaberite skladište</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="destination" class="form-label">Odredišna adresa:</label>
+              <input type="text" id="destination" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="weight" class="form-label">Težina paketa (kg):</label>
+              <input type="number" id="weight" class="form-control" step="0.01" required>
+            </div>
+            <div class="mb-3">
+              <label for="dimensions" class="form-label">Dimenzije paketa (DxŠxV u cm):</label>
+              <input type="text" id="dimensions" class="form-control" placeholder="npr. 50x30x20" required>
+            </div>
+            <button type="submit" class="btn btn-success">Potvrdi narudžbu</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="summary" style="display: none;">
+        <h3>Narudžba:</h3>
+        <p><strong>Datum:</strong> <span id="summaryDate"></span></p>
+        <p><strong>Klijent:</strong> <span id="summaryClient"></span></p>
+        <p><strong>Skladište:</strong> <span id="summaryWarehouse"></span></p>
+        <p><strong>Odredišna adresa:</strong> <span id="summaryDestination"></span></p>
+        <p><strong>Težina:</strong> <span id="summaryWeight"></span> kg</p>
+        <p><strong>Dimenzije:</strong> <span id="summaryDimensions"></span></p>
+        <p><strong>Udaljenost:</strong> <span id="summaryDistance"></span> km</p>
+        <p><strong>Cijena dostave:</strong> <span id="summaryPrice"></span> EUR</p>
+        <p><strong>Unikatni ID (Poziv na broj):</strong> <span id="summaryUniqueId"></span></p>
+        <div id="capacityInfo"></div>
+        <button id="submitTransportRequest" class="btn btn-primary">Podnesi zahtjev za transport</button>
+      </div>
+
+      <div id="invoice" style="display: none;">
+        <h3>Faktura</h3>
+        <p><strong>Izdavatelj:</strong> <span id="invoiceIssuer"></span></p>
+        <p><strong>Primatelj:</strong> <span id="invoiceRecipient"></span></p>
+        <p><strong>Identifikacijski broj fakture:</strong> <span id="invoiceId"></span></p>
+        <p><strong>Datum izdavanja:</strong> <span id="invoiceIssuanceDate"></span></p>
+        <p><strong>Datum dospijeća:</strong> <span id="invoiceDueDate"></span></p>
+        <p><strong>Opis usluge:</strong> <span id="invoiceDescription"></span></p>
+        <p><strong>Količina:</strong> <span id="invoiceQuantity"></span></p>
+        <p><strong>Jedinična cijena:</strong> <span id="invoiceUnitPrice"></span> EUR</p>
+        <p><strong>Stopa PDV-a:</strong> <span id="invoiceVatRate"></span></p>
+        <p><strong>Iznos PDV-a:</strong> <span id="invoiceVatAmount"></span> EUR</p>
+        <p><strong>Ukupan iznos:</strong> <span id="invoiceTotal"></span> EUR</p>
+        <p><strong>Metoda plaćanja:</strong> <span id="invoiceMethod"></span></p>
+        <p><strong>Račun:</strong> <span id="invoiceAccount"></span></p>
+        <p><strong>Primatelj:</strong> <span id="invoiceRecipientPayment"></span></p>
+        <p><strong>Poziv na broj:</strong> <span id="invoiceReference"></span></p>
       </div>
     </div>
 
-    <div id="summary" style="display: none;">
-      <h3>Narudžba:</h3>
-      <p><strong>Datum:</strong> <span id="summaryDate"></span></p>
-      <p><strong>Udaljenost:</strong> <span id="summaryDistance"></span> km</p>
-      <p><strong>Cijena dostave:</strong> <span id="summaryPrice"></span> EUR</p>
+    <div id="clients-section" style="display: none;">
+      <h1>Klijenti</h1>
+      <div class="card">
+        <div class="card-body">
+          <h2>Dodaj klijenta</h2>
+          <form id="clientForm">
+            <div class="mb-3">
+              <label for="clientName" class="form-label">Ime klijenta:</label>
+              <input type="text" id="clientName" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="clientAddress" class="form-label">Adresa klijenta:</label>
+              <input type="text" id="clientAddress" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-success">Dodaj klijenta</button>
+          </form>
+        </div>
+      </div>
+      <div id="clientList" class="mt-3"></div>
+    </div>
+
+    <div id="orders-section" style="display: none;">
+      <h1>Narudžbe</h1>
+      <p>Ovdje možete vidjeti svoje trenutne narudžbe. Za povijest narudžbi idite na "Povijest".</p>
+      <div id="pendingOrdersList"></div>
+    </div>
+
+    <div id="historyDone-section" style="display: none;">
+      <h1>Povijest - Odradeno</h1>
+      <div id="historyDoneList"></div>
+    </div>
+
+    <div id="historyCanceled-section" style="display: none;">
+      <h1>Povijest - Otkazano</h1>
+      <div id="historyCanceledList"></div>
+    </div>
+
+    <div id="historyInProgress-section" style="display: none;">
+      <h1>Povijest - U tijeku</h1>
+      <div id="historyInProgressList"></div>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Flatpickr JS za kalendar -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script>
-    // Inicijalizacija kalendara
+    let token = localStorage.getItem('token');
+    let currentUser = JSON.parse(localStorage.getItem('user'));
+    let currentOrderId = null;
+
+    function showSection(section) {
+      const sections = [
+        'login', 'register', 'profile', 'orderTransport', 'clients', 'orders',
+        'historyDone', 'historyCanceled', 'historyInProgress'
+      ];
+      sections.forEach((s) => {
+        document.getElementById(`${s}-section`).style.display = s === section ? 'block' : 'none';
+      });
+
+      if (section === 'orderTransport' && token) {
+        loadClients();
+        loadWarehouseAddresses();
+      } else if (section === 'clients' && token) {
+        loadClientList();
+      } else if (section === 'orders' && token) {
+        loadPendingOrders();
+      } else if (section === 'historyDone' && token) {
+        loadHistory('completed');
+      } else if (section === 'historyCanceled' && token) {
+        loadHistory('canceled');
+      } else if (section === 'historyInProgress' && token) {
+        loadHistory('pending');
+      } else if (section === 'profile' && token) {
+        loadProfile();
+      }
+    }
+
+    if (token && currentUser) {
+      showSection('orderTransport');
+    } else {
+      showSection('login');
+    }
+
     flatpickr("#datePicker", {
       dateFormat: "Y-m-d",
       minDate: "today",
-      defaultDate: "2025-03-05" // Hardkodirano kao na slici
+      defaultDate: "2025-03-10"
     });
 
-    // Učitavanje adresa za dropdown
-    fetch('http://localhost:5001/api/addresses')
-      .then(response => response.json())
-      .then(data => {
-        const warehouseSelect = document.getElementById('warehouse');
-        data.forEach(address => {
-          const option = document.createElement('option');
-          option.value = address.address;
-          option.textContent = address.address;
-          warehouseSelect.appendChild(option);
-        });
-      });
-
-    // Obrada forme
-    document.getElementById('orderForm').addEventListener('submit', (e) => {
+    document.getElementById('registerForm').addEventListener('submit', (e) => {
       e.preventDefault();
+      const company_name = document.getElementById('registerCompanyName').value;
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const address = document.getElementById('registerAddress').value;
+      const warehouseAddressesInput = document.getElementById('registerWarehouseAddresses').value.split('\n').filter(a => a.trim());
+      const warehouse_addresses = warehouseAddressesInput.map(addr => ({ address: addr.trim(), default: warehouseAddressesInput.indexOf(addr) === 0 }));
 
-      const date = document.getElementById('datePicker').value;
-      const warehouse = document.getElementById('warehouse').value;
-      const destination1 = document.getElementById('destination1').value;
-      const destination2 = document.getElementById('destination2').value;
-
-      if (!date || !warehouse || !destination1) {
-        alert('Molimo popunite obavezna polja!');
-        return;
-      }
-
-      const orderData = {
-        date,
-        warehouse_address: warehouse,
-        destination1,
-        destination2: destination2 || null
-      };
-
-      fetch('http://localhost:5001/api/orders', {
+      fetch('http://localhost:5001/api/users/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(orderData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_name, email, password, address, warehouse_addresses }),
       })
         .then(response => response.json())
         .then(data => {
-          const summary = document.getElementById('summary');
-          document.getElementById('summaryDate').textContent = data.date;
-          document.getElementById('summaryDistance').textContent = data.distance;
-          document.getElementById('summaryPrice').textContent = data.price.toFixed(2);
-          summary.style.display = 'block';
+          if (data.error) alert(data.error);
+          else {
+            alert('Registracija uspješna! Sada se možete prijaviti.');
+            showSection('login');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Došlo je do greške prilikom registracije.');
+        });
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      fetch('http://localhost:5001/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) alert(data.error);
+          else {
+            token = data.token;
+            currentUser = data.user;
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(currentUser));
+            showSection('orderTransport');
+            loadClients();
+            loadWarehouseAddresses();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Došlo je do greške prilikom prijave.');
+        });
+    });
+
+    function logout() {
+      token = null;
+      currentUser = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      showSection('login');
+    }
+
+    function loadProfile() {
+      document.getElementById('profileCompanyName').value = currentUser.company_name;
+      document.getElementById('profileAddress').value = currentUser.address;
+      document.getElementById('profileWarehouseAddresses').value = currentUser.warehouse_addresses.map(addr => addr.address).join('\n');
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const company_name = document.getElementById('profileCompanyName').value;
+      const address = document.getElementById('profileAddress').value;
+      const warehouseAddressesInput = document.getElementById('profileWarehouseAddresses').value.split('\n').filter(a => a.trim());
+      const warehouse_addresses = warehouseAddressesInput.map((addr, index) => ({ address: addr.trim(), default: index === 0 }));
+
+      fetch('http://localhost:5001/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ company_name, address, warehouse_addresses }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) alert(data.error);
+          else {
+            currentUser.company_name = data.company_name;
+            currentUser.address = data.address;
+            currentUser.warehouse_addresses = data.warehouse_addresses;
+            localStorage.setItem('user', JSON.stringify(currentUser));
+            alert('Profil ažuriran!');
+            loadWarehouseAddresses();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Došlo je do greške prilikom ažuriranja profila.');
+        });
+    });
+
+    function loadClients() {
+      fetch('http://localhost:5001/api/clients', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(response => response.json())
+        .then(data => {
+          const clientSelect = document.getElementById('client');
+          clientSelect.innerHTML = '<option value="" disabled selected>Odaberite klijenta</option>';
+          data.forEach(client => {
+            const option = document.createElement('option');
+            option.value = client.id;
+            option.textContent = `${client.name} (${client.address})`;
+            clientSelect.appendChild(option);
+          });
+        })
+        .catch(error => console.error('Error fetching clients:', error));
+    }
+
+    function loadWarehouseAddresses() {
+      fetch('http://localhost:5001/api/users/warehouse-addresses', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(response => response.json())
+        .then(data => {
+          const warehouseSelect = document.getElementById('warehouse');
+          warehouseSelect.innerHTML = '<option value="" disabled selected>Odaberite skladište</option>';
+          data.forEach(addr => {
+            const option = document.createElement('option');
+            option.value = addr.address;
+            option.textContent = addr.address;
+            warehouseSelect.appendChild(option);
+          });
+        })
+        .catch(error => console.error('Error fetching warehouse addresses:', error));
+    }
+
+    document.getElementById('clientForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('clientName').value;
+      const address = document.getElementById('clientAddress').value;
+
+      fetch('http://localhost:5001/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name, address }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) alert(data.error);
+          else {
+            alert('Klijent dodan!');
+            document.getElementById('clientForm').reset();
+            loadClientList();
+            loadClients();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Došlo je do greške prilikom dodavanja klijenta.');
+        });
+    });
+
+    function loadClientList() {
+      fetch('http://localhost:5001/api/clients', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(response => response.json())
+        .then(data => {
+          const clientList = document.getElementById('clientList');
+          clientList.innerHTML = '<h3>Popis klijenata</h3>';
+          if (data.length === 0) {
+            clientList.innerHTML += '<p>Nema klijenata.</p>';
+            return;
+          }
+
+          const ul = document.createElement('ul');
+          data.forEach(client => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              ${client.name} (${client.address})
+              <button class="btn btn-sm btn-warning ms-2" onclick="editClient(${client.id}, '${client.name}', '${client.address}')">Uredi</button>
+              <button class="btn btn-sm btn-danger ms-2" onclick="deleteClient(${client.id})">Obriši</button>
+            `;
+            ul.appendChild(li);
+          });
+          clientList.appendChild(ul);
+        })
+        .catch(error => console.error('Error fetching clients:', error));
+    }
+
+    window.editClient = (id, name, address) => {
+      const newName = prompt('Novo ime klijenta:', name);
+      const newAddress = prompt('Nova adresa klijenta:', address);
+      if (newName && newAddress) {
+        fetch(`http://localhost:5001/api/clients/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ name: newName, address: newAddress }),
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) alert(data.error);
+            else {
+              alert('Klijent ažuriran!');
+              loadClientList();
+              loadClients();
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Došlo je do greške prilikom ažuriranja klijenta.');
+          });
+      }
+    };
+
+    window.deleteClient = (id) => {
+      if (confirm('Jeste li sigurni da želite obrisati ovog klijenta?')) {
+        fetch(`http://localhost:5001/api/clients/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` },
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) alert(data.error);
+            else {
+              alert('Klijent obrisan!');
+              loadClientList();
+              loadClients();
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Došlo je do greške prilikom brisanja klijenta.');
+          });
+      }
+    };
+
+    document.getElementById('orderForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const client_id = document.getElementById('client').value;
+      const date = document.getElementById('datePicker').value;
+      const warehouse_address = document.getElementById('warehouse').value;
+      const destination = document.getElementById('destination').value;
+      const weight = document.getElementById('weight').value;
+      const dimensions = document.getElementById('dimensions').value;
+
+      if (!client_id || !date || !warehouse_address || !destination || !weight || !dimensions) {
+        alert('Molimo popunite sva obavezna polja!');
+        return;
+      }
+
+      const orderData = { client_id, date, warehouse_address, destination, weight, dimensions };
+
+      fetch('http://localhost:5001/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(orderData),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) alert(data.error);
+          else {
+            currentOrderId = data.id;
+            const summary = document.getElementById('summary');
+            document.getElementById('summaryDate').textContent = data.date;
+            document.getElementById('summaryClient').textContent = document.getElementById('client').options[document.getElementById('client').selectedIndex].text;
+            document.getElementById('summaryWarehouse').textContent = data.warehouse_address;
+            document.getElementById('summaryDestination').textContent = data.destination;
+            document.getElementById('summaryWeight').textContent = data.weight;
+            document.getElementById('summaryDimensions').textContent = data.dimensions;
+            document.getElementById('summaryDistance').textContent = data.distance;
+            document.getElementById('summaryPrice').textContent = data.price.toFixed(2);
+            document.getElementById('summaryUniqueId').textContent = data.unique_id;
+
+            const capacityInfo = document.getElementById('capacityInfo');
+            const capacity = data.capacity_info;
+            capacityInfo.innerHTML = '<h4>Kapacitet kombija:</h4>';
+            if (!capacity.fitsDimensions) {
+              capacityInfo.innerHTML += '<div class="alert alert-danger">Dimenzije paketa premašuju ograničenja kombija (400x180x190 cm).</div>';
+            } else if (capacity.exceedsWeight) {
+              capacityInfo.innerHTML += '<div class="alert alert-danger">Težina paketa premašuje maksimalnu težinu kombija (1500 kg).</div>';
+            } else if (capacity.exceedsVolume) {
+              capacityInfo.innerHTML += '<div class="alert alert-danger">Volumen paketa premašuje maksimalni volumen kombija.</div>';
+            } else {
+              capacityInfo.innerHTML += `<div class="alert alert-success">U kombi može stati ${capacity.maxPackages} paketa s ovim dimenzijama i težinom.</div>`;
+            }
+
+            summary.style.display = 'block';
+            document.getElementById('invoice').style.display = 'none';
+          }
         })
         .catch(error => {
           console.error('Error:', error);
           alert('Došlo je do greške prilikom slanja narudžbe.');
         });
     });
+
+    document.getElementById('submitTransportRequest').addEventListener('click', () => {
+      if (!currentOrderId) {
+        alert('Nema aktivne narudžbe za podnošenje zahtjeva.');
+        return;
+      }
+
+      fetch(`http://localhost:5001/api/orders/${currentOrderId}/submit`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) alert(data.error);
+          else {
+            const invoice = document.getElementById('invoice');
+            document.getElementById('invoiceIssuer').textContent = data.invoice.issuer;
+            document.getElementById('invoiceRecipient').textContent = data.invoice.recipient;
+            document.getElementById('invoiceId').textContent = data.invoice.reference;
+            document.getElementById('invoiceIssuanceDate').textContent = data.invoice.issuanceDate;
+            document.getElementById('invoiceDueDate').textContent = data.invoice.dueDate;
+            document.getElementById('invoiceDescription').textContent = data.invoice.description;
+            document.getElementById('invoiceQuantity').textContent = data.invoice.quantity;
+            document.getElementById('invoiceUnitPrice').textContent = data.invoice.unitPrice;
+            document.getElementById('invoiceVatRate').textContent = data.invoice.vatRate;
+            document.getElementById('invoiceVatAmount').textContent = data.invoice.vatAmount;
+            document.getElementById('invoiceTotal').textContent = data.invoice.amount;
+            document.getElementById('invoiceMethod').textContent = data.invoice.method;
+            document.getElementById('invoiceAccount').textContent = data.invoice.account;
+            document.getElementById('invoiceRecipientPayment').textContent = data.invoice.recipient;
+            document.getElementById('invoiceReference').textContent = data.invoice.reference;
+            invoice.style.display = 'block';
+            alert('Zahtjev za transport podnesen!');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Došlo je do greške prilikom podnošenja zahtjeva za transport.');
+        });
+    });
+
+    function loadPendingOrders() {
+      fetch('http://localhost:5001/api/orders', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(response => response.json())
+        .then(data => {
+          const pendingOrdersList = document.getElementById('pendingOrdersList');
+          pendingOrdersList.innerHTML = '<h3>Trenutne narudžbe</h3>';
+          const pendingOrders = data.filter(order => order.status === 'pending');
+          if (pendingOrders.length === 0) {
+            pendingOrdersList.innerHTML += '<p>Nema trenutnih narudžbi.</p>';
+            return;
+          }
+
+          const ul = document.createElement('ul');
+          pendingOrders.forEach(order => {
+            const li = document.createElement('li');
+            const capacity = order.capacity_info;
+            let capacityText = '<h5>Kapacitet kombija:</h5>';
+            if (!capacity.fitsDimensions) {
+              capacityText += '<div class="alert alert-danger">Dimenzije paketa premašuju ograničenja kombija (400x180x190 cm).</div>';
+            } else if (capacity.exceedsWeight) {
+              capacityText += '<div class="alert alert-danger">Težina paketa premašuje maksimalnu težinu kombija (1500 kg).</div>';
+            } else if (capacity.exceedsVolume) {
+              capacityText += '<div class="alert alert-danger">Volumen paketa premašuje maksimalni volumen kombija.</div>';
+            } else {
+              capacityText += `<div class="alert alert-success">U kombi može stati ${capacity.maxPackages} paketa s ovim dimenzijama i težinom.</div>`;
+            }
+
+            li.innerHTML = `
+              Klijent: ${order.client_name} (${order.client_address})<br>
+              Datum: ${order.date}<br>
+              Skladište: ${order.warehouse_address}<br>
+              Odredište: ${order.destination}<br>
+              Težina: ${order.weight} kg<br>
+              Dimenzije: ${order.dimensions}<br>
+              Udaljenost: ${order.distance} km<br>
+              Cijena: ${order.price.toFixed(2)} EUR<br>
+              Unikatni ID: ${order.unique_id}<br>
+              ${capacityText}
+              <button class="btn btn-sm btn-primary ms-2" onclick="submitTransportRequest(${order.id})">Podnesi zahtjev za transport</button>
+            `;
+            ul.appendChild(li);
+          });
+          pendingOrdersList.appendChild(ul);
+        })
+        .catch(error => console.error('Error fetching orders:', error));
+    }
+
+    window.submitTransportRequest = (orderId) => {
+      fetch(`http://localhost:5001/api/orders/${orderId}/submit`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) alert(data.error);
+          else {
+            alert('Zahtjev za transport podnesen!');
+            loadPendingOrders();
+            loadHistory(data.invoice.status);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Došlo je do greške prilikom podnošenja zahtjeva za transport.');
+        });
+    };
+
+    function loadHistory(status) {
+      fetch('http://localhost:5001/api/orders', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(response => response.json())
+        .then(data => {
+          let historyList;
+          if (status === 'completed') historyList = document.getElementById('historyDoneList');
+          else if (status === 'canceled') historyList = document.getElementById('historyCanceledList');
+          else historyList = document.getElementById('historyInProgressList');
+          historyList.innerHTML = `<h3>Povijest - ${status === 'completed' ? 'Odradeno' : status === 'canceled' ? 'Otkazano' : 'U tijeku'}</h3>`;
+          const filteredOrders = data.filter(order => order.status === (status || 'submitted'));
+          if (filteredOrders.length === 0) {
+            historyList.innerHTML += `<p>Nema narudžbi u kategoriji ${status || 'submitted'}.</p>`;
+            return;
+          }
+
+          const ul = document.createElement('ul');
+          filteredOrders.forEach(order => {
+            const li = document.createElement('li');
+            const capacity = order.capacity_info;
+            let capacityText = '<h5>Kapacitet kombija:</h5>';
+            if (!capacity.fitsDimensions) {
+              capacityText += '<div class="alert alert-danger">Dimenzije paketa premašuju ograničenja kombija (400x180x190 cm).</div>';
+            } else if (capacity.exceedsWeight) {
+              capacityText += '<div class="alert alert-danger">Težina paketa premašuje maksimalnu težinu kombija (1500 kg).</div>';
+            } else if (capacity.exceedsVolume) {
+              capacityText += '<div class="alert alert-danger">Volumen paketa premašuje maksimalni volumen kombija.</div>';
+            } else {
+              capacityText += `<div class="alert alert-success">U kombi može stati ${capacity.maxPackages} paketa s ovim dimenzijama i težinom.</div>`;
+            }
+
+            li.innerHTML = `
+              Klijent: ${order.client_name} (${order.client_address})<br>
+              Datum: ${order.date}<br>
+              Skladište: ${order.warehouse_address}<br>
+              Odredište: ${order.destination}<br>
+              Težina: ${order.weight} kg<br>
+              Dimenzije: ${order.dimensions}<br>
+              Udaljenost: ${order.distance} km<br>
+              Cijena: ${order.price.toFixed(2)} EUR<br>
+              Unikatni ID: ${order.unique_id}<br>
+              ${capacityText}
+              Status: ${order.status}
+            `;
+            ul.appendChild(li);
+          });
+          historyList.appendChild(ul);
+        })
+        .catch(error => console.error('Error fetching history:', error));
+    }
   </script>
 </body>
 </html>

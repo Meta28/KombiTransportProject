@@ -1,20 +1,19 @@
 import jwt from 'jsonwebtoken';
-import { config } from '../config/env.js';
 
-export const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Nema tokena' });
+const authMiddleware = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]; // Očekujemo "Bearer <token>"
 
-    // Privremena provjera za razvojni token
-    if (token === 'dummy-token-for-dev') {
-        req.user = { id: 1, role: 'client', name: 'Test User' }; // Simuliraj korisnika za test
-        return next();
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  jwt.verify(token, 'your_jwt_secret', (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
-
-    jwt.verify(token, config.jwtSecret, (err, user) => {
-        if (err) return res.status(403).json({ error: 'Nevažeći token' });
-        req.user = user;
-        next();
-    });
+    req.user = decoded; // Spremamo dekodirane podatke (npr. user id) u zahtjev
+    next();
+  });
 };
+
+export default authMiddleware;

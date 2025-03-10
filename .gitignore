@@ -1,0 +1,20 @@
+# Node.js ignoriranje
+node_modules/
+package-lock.json
+database.db
+
+# Log datoteke
+*.log
+
+# Environment varijable
+.env
+
+# IDE specifične datoteke (npr. Visual Studio Code)
+.vscode/
+
+# Build ili distribucijski direktoriji (ako ih kasnije dodamo)
+dist/
+build/
+
+# macOS specifične datoteke
+.DS_Store

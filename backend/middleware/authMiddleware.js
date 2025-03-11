@@ -1,22 +1,18 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
-// Middleware za provjeru JWT tokena
-function verifyToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
+const authMiddleware = (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
   if (!token) {
-    return res.status(401).json({ error: 'Pristup odbijen. Token nije dostavljen.' });
+    return res.status(401).json({ error: 'No token provided' });
   }
 
-  jwt.verify(token, 'tajni_kljuc', (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Token nije važeći.' });
-    }
-
-    req.user = user;
+  try {
+    const decoded = jwt.verify(token, 'your_jwt_secret');
+    req.user = { id: decoded.id }; // Postavi korisnički ID u request
     next();
-  });
-}
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
-module.exports = verifyToken;
+export default authMiddleware;

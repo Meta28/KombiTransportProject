@@ -1,11 +1,11 @@
-import Client from '../models/client.js';
+import db from '../config/database.js';
 
 const clientController = {
   getClients: (req, res) => {
     const userId = req.user.id;
-    Client.findByUserId(userId, (err, clients) => {
+    db.all('SELECT * FROM clients WHERE user_id = ?', [userId], (err, clients) => {
       if (err) {
-        return res.status(500).json({ error: 'Error fetching clients', details: err.message });
+        return res.status(500).json({ error: 'Greška prilikom dohvaćanja klijenata', details: err.message });
       }
       res.json(clients);
     });
@@ -13,39 +13,62 @@ const clientController = {
   createClient: (req, res) => {
     const userId = req.user.id;
     const { name, address } = req.body;
+
     if (!name || !address) {
-      return res.status(400).json({ error: 'Name and address are required' });
+      return res.status(400).json({ error: 'Ime i adresa klijenta su obavezni' });
     }
 
-    Client.create({ user_id: userId, name, address }, (err, client) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error creating client', details: err.message });
+    db.run(
+      'INSERT INTO clients (user_id, name, address) VALUES (?, ?, ?)',
+      [userId, name, address],
+      function (err) {
+        if (err) {
+          return res.status(500).json({ error: 'Greška prilikom kreiranja klijenta', details: err.message });
+        }
+        res.status(201).json({ id: this.lastID, user_id: userId, name, address });
       }
-      res.status(201).json(client);
-    });
+    );
   },
   updateClient: (req, res) => {
+    const userId = req.user.id;
     const clientId = req.params.id;
     const { name, address } = req.body;
+
     if (!name || !address) {
-      return res.status(400).json({ error: 'Name and address are required' });
+      return res.status(400).json({ error: 'Ime i adresa klijenta su obavezni' });
     }
 
-    Client.update(clientId, { name, address }, (err, updatedClient) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error updating client', details: err.message });
+    db.run(
+      'UPDATE clients SET name = ?, address = ? WHERE id = ? AND user_id = ?',
+      [name, address, clientId, userId],
+      function (err) {
+        if (err) {
+          return res.status(500).json({ error: 'Greška prilikom ažuriranja klijenta', details: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Klijent nije pronađen' });
+        }
+        res.json({ id: clientId, user_id: userId, name, address });
       }
-      res.json(updatedClient);
-    });
+    );
   },
   deleteClient: (req, res) => {
+    const userId = req.user.id;
     const clientId = req.params.id;
-    Client.delete(clientId, (err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error deleting client', details: err.message });
+
+    db.run(
+      'DELETE FROM clients WHERE id = ? AND user_id = ?',
+      [clientId, userId],
+      function (err) {
+        if (err) {
+          return res.status(500).json({ error: 'Greška prilikom brisanja klijenta', details: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Klijent nije pronađen' });
+        }
+        res.json({ message: 'Klijent obrisan' });
       }
-      res.json({ message: 'Client deleted' });
-    });
+    );
   },
 };
 

@@ -24,14 +24,14 @@ const userController = {
         },
         (err, user) => {
           if (err) {
-            console.error('Error creating user:', err.message); // Logiraj grešku
+            console.error('Error creating user:', err.message);
             return res.status(500).json({ error: 'Greška prilikom kreiranja korisnika', details: err.message });
           }
           res.status(201).json(user);
         }
       );
     } catch (err) {
-      console.error('Error hashing password:', err.message); // Logiraj grešku
+      console.error('Error hashing password:', err.message);
       return res.status(500).json({ error: 'Greška prilikom hashiranja lozinke', details: err.message });
     }
   },
@@ -62,7 +62,7 @@ const userController = {
       const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
       res.json({ token, user: { id: user.id, company_name: user.company_name, email: user.email, address: user.address, warehouse_addresses: JSON.parse(user.warehouse_addresses) } });
     } catch (err) {
-      console.error('Error during login:', err.message); // Logiraj grešku
+      console.error('Error during login:', err.message);
       return res.status(500).json({ error: 'Greška prilikom prijave', details: err.message });
     }
   },
@@ -73,7 +73,7 @@ const userController = {
 
     User.update(userId, { company_name, address, warehouse_addresses: JSON.stringify(warehouse_addresses) }, (err, updatedUser) => {
       if (err) {
-        console.error('Error updating profile:', err.message); // Logiraj grešku
+        console.error('Error updating profile:', err.message);
         return res.status(500).json({ error: 'Greška prilikom ažuriranja profila', details: err.message });
       }
       res.json({ ...updatedUser, warehouse_addresses: JSON.parse(updatedUser.warehouse_addresses) });
@@ -84,7 +84,7 @@ const userController = {
     const userId = req.user.id;
     User.getWarehouseAddresses(userId, (err, addresses) => {
       if (err) {
-        console.error('Error fetching warehouse addresses:', err.message); // Logiraj grešku
+        console.error('Error fetching warehouse addresses:', err.message);
         return res.status(500).json({ error: 'Greška prilikom dohvaćanja adresa skladišta', details: err.message });
       }
       res.json(addresses);

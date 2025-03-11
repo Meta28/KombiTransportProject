@@ -42,6 +42,90 @@ const orderController = {
       });
     });
   },
+  batchOrders: (req, res) => {
+    const userId = req.user.id;
+    const { packages } = req.body;
+
+    if (!packages || !Array.isArray(packages) || packages.length === 0) {
+      return res.status(400).json({ error: 'Nema unesenih paketa' });
+    }
+
+    let totalPrice = 0;
+    const orderIds = [];
+
+    packages.forEach((pkg, index) => {
+      const { client_id, date, warehouse_address, destination, weight, dimensions } = pkg;
+
+      if (!client_id || !date || !warehouse_address || !destination || !weight || !dimensions) {
+        return res.status(400).json({ error: `Nedostaju polja za paket ${index + 1}` });
+      }
+
+      const orderData = {
+        user_id: userId,
+        client_id,
+        date,
+        warehouse_address,
+        destination,
+        weight,
+        dimensions,
+      };
+
+      Order.create(orderData, (err, order) => {
+        if (err) {
+          return res.status(500).json({ error: `Greška prilikom kreiranja paketa ${index + 1}`, details: err.message });
+        }
+        orderIds.push(order.id);
+        totalPrice += order.price;
+
+        if (index === packages.length - 1) {
+          // Kreiraj fakturu za cijelu narudžbu
+          const issuanceDate = new Date().toISOString().split('T')[0];
+          const dueDate = new Date(new Date().setDate(new Date().getDate() + 8)).toISOString().split('T')[0];
+          const vatRate = 0.25;
+          const vatAmount = totalPrice * vatRate;
+          const totalAmount = totalPrice + vatAmount;
+
+          const paymentDetails = {
+            method: 'virman',
+            account: 'HR1234567890123456',
+            recipient: currentUser.company_name,
+            amount: totalAmount.toFixed(2),
+            reference: `TRN-${userId}-${Date.now()}`,
+            issuanceDate,
+            dueDate,
+            vatRate: '25%',
+            vatAmount: vatAmount.toFixed(2),
+          };
+
+          db.run(
+            `
+            INSERT INTO invoices (order_id, user_id, amount, payment_method, payment_details)
+            VALUES (?, ?, ?, ?, ?)
+            `,
+            [orderIds[0], userId, totalAmount, 'virman', JSON.stringify(paymentDetails)],
+            function (err) {
+              if (err) {
+                return res.status(500).json({ error: 'Greška prilikom kreiranja fakture', details: err.message });
+              }
+              res.json({
+                message: 'Narudžba podnesena',
+                invoice: {
+                  order_id: orderIds[0],
+                  user_id: userId,
+                  ...paymentDetails,
+                  issuer: `${currentUser.company_name}, ${currentUser.address}`,
+                  recipient: `${packages[0].client_name || 'Nepoznat klijent'}, ${packages[0].destination}`,
+                  description: `Dostava transporta (${totalPrice.toFixed(2)} EUR za ${packages.length} paketa)`,
+                  quantity: packages.length,
+                  unitPrice: (totalPrice / packages.length).toFixed(2),
+                },
+              });
+            }
+          );
+        }
+      });
+    });
+  },
   submitTransportRequest: (req, res) => {
     const orderId = req.params.id;
     const userId = req.user.id;
